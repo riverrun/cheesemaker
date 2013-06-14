@@ -102,7 +102,7 @@ class Imagewindow(Gtk.Window):
         Gtk.Window.__init__(self, title='cheesemaker')
 
         self.set_default_size(700, 500)
-        #self.set_default_icon_name('cheesemaker')
+        self.set_default_icon_name('cheesemaker')
         self.image = Gtk.Image()
         self.image_size = 'Zoomfit'
 
