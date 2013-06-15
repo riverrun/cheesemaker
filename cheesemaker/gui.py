@@ -105,6 +105,8 @@ class Imagewindow(Gtk.Window):
         self.set_default_icon_name('cheesemaker')
         self.image = Gtk.Image()
         self.image_size = 'Zoomfit'
+        self.win_width = 0
+        self.win_height = 0
 
         self.grid = Gtk.Grid()
         self.add(self.grid)
@@ -121,7 +123,7 @@ class Imagewindow(Gtk.Window):
 
         popup = uimanager.get_widget('/PopupMenu')
         self.set_events(Gdk.EventMask.BUTTON_PRESS_MASK|Gdk.EventMask.STRUCTURE_MASK)
-        self.connect('button_press_event', self.on_button_press, popup)
+        self.connect('button-press-event', self.on_button_press, popup)
 
         graylist = ['/MenuBar/EditMenu/Desaturate', '/PopupMenu/Desaturate']
         self.graylist = [uimanager.get_widget(name) for name in graylist]
@@ -176,6 +178,7 @@ class Imagewindow(Gtk.Window):
         self.scrolledwindow = Gtk.ScrolledWindow()
         self.scrolledwindow.set_hexpand(True)
         self.scrolledwindow.set_vexpand(True)
+        self.scrolledwindow.connect('size-allocate', self.on_resize)
         self.grid.attach(self.scrolledwindow, 0, 2, 1, 1)
         self.scrolledwindow.add_with_viewport(self.image)
 
@@ -203,8 +206,8 @@ class Imagewindow(Gtk.Window):
             self.grays = True
             self.image.set_from_pixbuf(self.pixbuf)
         else:
-            self.load_image()
             self.grays = False
+            self.reload_image()
 
     def new_image_reset(self):
         self.rotate_state = 0
@@ -216,6 +219,9 @@ class Imagewindow(Gtk.Window):
 
     def default_zoom_ratio(self, button, current):
         self.image_size = current.get_name()
+        self.reload_image()
+
+    def reload_image(self):
         pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
         self.pixbuf = self.rotated_flipped(pixbuf)
         if self.image_size == 'Zoomfit':
@@ -232,17 +238,15 @@ class Imagewindow(Gtk.Window):
         self.new_image_reset()
 
     def load_image_fit(self):
-        allocation = self.scrolledwindow.get_allocation()
-        self.width = allocation.width
-        self.height = allocation.height
-        ratio = self.width/self.height
-        image_width = self.pixbuf.get_width()
-        image_height = self.pixbuf.get_height()
-        image_ratio = image_width/image_height
-        if ratio > image_ratio:
-            self.width = min(self.height*image_ratio, image_width)
+        self.img_width = self.pixbuf.get_width()
+        self.img_height = self.pixbuf.get_height()
+        self.img_ratio = self.img_width/self.img_height
+        if self.win_ratio > self.img_ratio:
+            self.width = min(self.win_height*self.img_ratio, self.img_width)
+            self.height = self.win_height
         else:
-            self.height = min(self.width/image_ratio, image_height)
+            self.height = min(self.win_width/self.img_ratio, self.img_height)
+            self.width = self.win_width
         self.pixbuf = self.pixbuf.scale_simple(self.width, self.height, GdkPixbuf.InterpType.BILINEAR)
         self.image.set_from_pixbuf(self.pixbuf)
 
@@ -388,6 +392,15 @@ class Imagewindow(Gtk.Window):
     def on_button_press(self, widget, event, popup):
         if event.button == 3:
             popup.popup(None, None, None, None, 0, event.time)
+
+    def on_resize(self, widget, allocation):
+        if self.win_width != allocation.width or self.win_height != allocation.height:
+            self.win_width = allocation.width
+            self.win_height = allocation.height
+            self.win_ratio = self.win_width/self.win_height
+            self.load_image()
+        else:
+            pass
 
     def help_page(self, button):
         pass
