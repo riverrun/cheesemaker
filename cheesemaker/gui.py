@@ -17,8 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Cheesemaker.  If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from gi.repository import Gtk, Gdk, GdkPixbuf
-import os
+from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
+import os, random
 
 ui_info = """
 <ui>
@@ -48,6 +48,7 @@ ui_info = """
       <menuitem action='ShowToolBar'/>
       <separator/>
       <menuitem action='Full'/>
+      <menuitem action='Slides'/>
       <separator/>
       <menu action='ZoomMenu'>
         <menuitem action='Zoomin'/>
@@ -82,6 +83,7 @@ ui_info = """
     <menuitem action='Previmg'/>
     <separator/>
     <menuitem action='Full'/>
+    <menuitem action='Slides'/>
     <separator/>
     <menuitem action='ShowMenuBar'/>
     <menuitem action='ShowToolBar'/>
@@ -122,6 +124,9 @@ class Imagewindow(Gtk.Window):
         self.grid.attach(self.toolbar, 0, 1, 1, 1)
         self.imageview()
 
+        self.showmenubar = True
+        self.showtoolbar = True
+
         popup = uimanager.get_widget('/PopupMenu')
         self.set_events(Gdk.EventMask.BUTTON_PRESS_MASK|Gdk.EventMask.STRUCTURE_MASK)
         self.connect('button-press-event', self.on_button_press, popup)
@@ -159,6 +164,7 @@ class Imagewindow(Gtk.Window):
         action_group.add_toggle_actions([
             ('Desaturate', None, 'Toggle _grayscale', None, 'Toggle grayscale', self.toggle_gray),
             ('Full', Gtk.STOCK_FULLSCREEN, 'Fullscreen', 'F11', 'Fullscreen', self.toggle_full),
+            ('Slides', None, 'Slideshow', 'F5', 'Slideshow', self.toggle_slides),
             ('ShowMenuBar', None, 'Show _menubar', None, 'Show menubar', self.toggle_menu, True),
             ('ShowToolBar', None, 'Show _toolbar', None, 'Show toolbar', self.toggle_tool, True)
             ])
@@ -187,23 +193,53 @@ class Imagewindow(Gtk.Window):
         self.grid.attach(self.scrolledwindow, 0, 2, 1, 1)
         self.scrolledwindow.add_with_viewport(self.image)
 
+    def toggle_slides(self, button):
+        if button.get_active():
+            self.set_fullscreen()
+            self.timer_delay = GLib.timeout_add_seconds(5, self.start_slideshow)
+        else:
+            GLib.source_remove(self.timer_delay)
+            self.set_unfullscreen()
+
+    def start_slideshow(self, showrandom=False):
+        if showrandom:
+            random.shuffle(self.filelist)
+        self.goto_next_image()
+        return True
+
     def toggle_full(self, button):
         if button.get_active():
-            self.fullscreen()
+            self.set_fullscreen()
         else:
-            self.unfullscreen()
+            self.set_unfullscreen()
+
+    def set_fullscreen(self):
+        self.fullscreen()
+        self.menubar.hide()
+        self.toolbar.hide()
+
+    def set_unfullscreen(self):
+        self.unfullscreen()
+        if self.showmenubar:
+            self.menubar.show()
+        if self.showtoolbar:
+            self.toolbar.show()
 
     def toggle_menu(self, button):
         if button.get_active():
             self.menubar.show()
+            self.showmenubar = True
         else:
             self.menubar.hide()
+            self.showmenubar = False
 
     def toggle_tool(self, button):
         if button.get_active():
             self.toolbar.show()
+            self.showtoolbar = True
         else:
             self.toolbar.hide()
+            self.showtoolbar = False
 
     def toggle_gray(self, button):
         if button.get_active():
@@ -213,26 +249,6 @@ class Imagewindow(Gtk.Window):
         else:
             self.grays = False
             self.reload_image()
-
-    def new_image_reset(self):
-        self.rotate_state = 0
-        self.fliph = False
-        self.flipv = False
-        self.grays = False
-        for name in self.graylist:
-            name.set_active(False)
-
-    def default_zoom_ratio(self, button, current):
-        self.image_size = current.get_name()
-        self.reload_image()
-
-    def reload_image(self):
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
-        self.pixbuf = self.rotated_flipped(pixbuf)
-        if self.image_size == 'Zoomfit':
-            self.load_image_fit()
-        else:
-            self.load_image_1to1()
 
     def load_image(self):
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
@@ -260,6 +276,18 @@ class Imagewindow(Gtk.Window):
         self.height = self.pixbuf.get_height()
         self.image.set_from_pixbuf(self.pixbuf)
 
+    def reload_image(self):
+        pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
+        self.pixbuf = self.rotated_flipped(pixbuf)
+        if self.image_size == 'Zoomfit':
+            self.load_image_fit()
+        else:
+            self.load_image_1to1()
+
+    def default_zoom_ratio(self, button, current):
+        self.image_size = current.get_name()
+        self.reload_image()
+
     def image_zoom_in(self, button):
         self.image_zoom(1.25)
 
@@ -273,13 +301,16 @@ class Imagewindow(Gtk.Window):
         self.pixbuf = self.pixbuf.scale_simple(self.width, self.height, GdkPixbuf.InterpType.BILINEAR)
         self.image.set_from_pixbuf(self.pixbuf)
 
-    def go_next_image(self, button):
+    def goto_next_image(self):
         if self.image_index < len(self.filelist)-1:
             self.image_index += 1
         else:
             self.image_index = 0
         self.filename = self.filelist[self.image_index]
         self.load_image()
+
+    def go_next_image(self, button):
+        self.goto_next_image()
 
     def go_prev_image(self, button):
         if self.image_index > 0:
@@ -328,6 +359,14 @@ class Imagewindow(Gtk.Window):
         if self.grays:
             pixbuf.saturate_and_pixelate(pixbuf, 0.0, False)
         return pixbuf
+
+    def new_image_reset(self):
+        self.rotate_state = 0
+        self.fliph = False
+        self.flipv = False
+        self.grays = False
+        for name in self.graylist:
+            name.set_active(False)
 
     def open_image(self, button):
         dialog = Gtk.FileChooserDialog('Please choose a file', self,
@@ -397,12 +436,13 @@ class Imagewindow(Gtk.Window):
             popup.popup(None, None, None, None, 0, event.time)
 
     def on_resize(self, widget, allocation):
-        if self.win_width != allocation.width or self.win_height != allocation.height:
-            self.win_width = allocation.width
-            self.win_height = allocation.height
-            self.win_ratio = self.win_width/self.win_height
-            self.load_image()
-        else:
+        try:
+            if self.win_width != allocation.width or self.win_height != allocation.height:
+                self.win_width = allocation.width
+                self.win_height = allocation.height
+                self.win_ratio = self.win_width/self.win_height
+                self.load_image()
+        except:
             pass
 
     def help_page(self, button):
