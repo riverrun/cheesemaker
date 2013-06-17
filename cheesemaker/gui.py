@@ -15,7 +15,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with cheesemaker.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+# along with Cheesemaker.  If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 from gi.repository import Gtk, Gdk, GdkPixbuf
 import os
@@ -99,11 +99,12 @@ ui_info = """
 
 class Imagewindow(Gtk.Window):
     def __init__(self):
-        Gtk.Window.__init__(self, title='cheesemaker')
+        Gtk.Window.__init__(self, title='Cheesemaker')
 
         self.set_default_size(700, 500)
         self.set_default_icon_name('cheesemaker')
         self.image = Gtk.Image()
+        self.set_bg_color()
         self.image_size = 'Zoomfit'
         self.win_width = 0
         self.win_height = 0
@@ -150,7 +151,7 @@ class Imagewindow(Gtk.Window):
             ('Zoomin', Gtk.STOCK_ZOOM_IN, 'Zoom in', '<Ctrl>Up', 'Zoom in', self.image_zoom_in),
             ('Zoomout', Gtk.STOCK_ZOOM_OUT, 'Zoom out', '<Ctrl>Down', 'Zoom out', self.image_zoom_out),
             ('HelpMenu', None, '_Help'),
-            ('Help', Gtk.STOCK_HELP, 'Help', 'F1', 'Open the help page in your web browser', self.help_page),
+            ('Help', Gtk.STOCK_HELP, 'Help', 'F1', 'Open the help page', self.help_page),
             ('About', Gtk.STOCK_ABOUT, 'About', None, 'About', self.about_dialog),
             ('Quit', Gtk.STOCK_QUIT, 'Quit', None, 'Quit', self.quit_app)
             ])
@@ -173,6 +174,10 @@ class Imagewindow(Gtk.Window):
         accelgroup = uimanager.get_accel_group()
         self.add_accel_group(accelgroup)
         return uimanager
+
+    def set_bg_color(self):
+        bg_color = Gdk.Color.parse('black')
+        self.image.modify_bg(Gtk.StateType.NORMAL, bg_color[1])
 
     def imageview(self):
         self.scrolledwindow = Gtk.ScrolledWindow()
@@ -285,20 +290,18 @@ class Imagewindow(Gtk.Window):
         self.load_image()
 
     def image_rotate_left(self, button):
-        self.pixbuf = self.pixbuf.rotate_simple(GdkPixbuf.PixbufRotation.COUNTERCLOCKWISE)
-        self.image.set_from_pixbuf(self.pixbuf)
         if self.rotate_state > 0:
             self.rotate_state -= 1
         else:
             self.rotate_state = 3
+        self.reload_image()
 
     def image_rotate_right(self, button):
-        self.pixbuf = self.pixbuf.rotate_simple(GdkPixbuf.PixbufRotation.CLOCKWISE)
-        self.image.set_from_pixbuf(self.pixbuf)
         if self.rotate_state < 3:
             self.rotate_state += 1
         else:
             self.rotate_state = 0
+        self.reload_image()
 
     def image_flip_horiz(self, button):
         self.pixbuf = self.pixbuf.flip(True)
@@ -406,12 +409,24 @@ class Imagewindow(Gtk.Window):
         pass
 
     def about_dialog(self, button):
+        license = ('Cheesemaker is free software: you can redistribute it and/or modify '
+        'it under the terms of the GNU General Public License as published by '
+        'the Free Software Foundation, either version 3 of the License, or '
+        '(at your option) any later version.\n\n'
+        'Cheesemaker is distributed in the hope that it will be useful, '
+        'but WITHOUT ANY WARRANTY; without even the implied warranty of '
+        'MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the '
+        'GNU General Public License for more details.\n\n'
+        'You should have received a copy of the GNU General Public License '
+        'along with Cheesemaker. If not, see http://www.gnu.org/licenses/gpl.html')
         about = Gtk.AboutDialog()
-        about.set_program_name('cheesemaker')
+        about.set_program_name('Cheesemaker')
         about.set_version('0.1.0')
-        about.set_license_type(Gtk.License.GPL_3_0)
+        about.set_license(license)
+        about.set_wrap_license(True)
         about.set_comments('An image viewer')
         about.set_authors(['David Whitlock <alovedalongthe@gmail.com>'])
+        about.set_logo_icon_name('cheesemaker')
         about.run()
         about.destroy()
 
