@@ -217,6 +217,8 @@ class Imagewindow(Gtk.Window):
         self.fullscreen()
         self.menubar.hide()
         self.toolbar.hide()
+        cursor = Gdk.Cursor.new(Gdk.CursorType.BLANK_CURSOR)
+        self.get_window().set_cursor(cursor)
 
     def set_unfullscreen(self):
         self.unfullscreen()
@@ -224,6 +226,8 @@ class Imagewindow(Gtk.Window):
             self.menubar.show()
         if self.showtoolbar:
             self.toolbar.show()
+        cursor = Gdk.Cursor.new(Gdk.CursorType.ARROW)
+        self.get_window().set_cursor(cursor)
 
     def toggle_menu(self, button):
         if button.get_active():
