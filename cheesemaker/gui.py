@@ -252,38 +252,21 @@ class Imagewindow(Gtk.Window):
             self.image.set_from_pixbuf(self.pixbuf)
         else:
             self.grays = False
-            self.reload_image()
+            self.load_image()
 
     def load_image(self):
         if self.image_size == 'Zoomfit':
-            self.load_image_fit()
+            self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.win_width, self.win_height)
         else:
-            self.load_image_1to1()
-        self.new_image_reset()
-
-    def load_image_fit(self):
-        self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.win_width, self.win_height)
+            self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
         self.width = self.pixbuf.get_width()
         self.height = self.pixbuf.get_height()
-        self.image.set_from_pixbuf(self.pixbuf)
-
-    def load_image_1to1(self):
-        self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
-        self.width = self.pixbuf.get_width()
-        self.height = self.pixbuf.get_height()
-        self.image.set_from_pixbuf(self.pixbuf)
-
-    def reload_image(self):
-        if self.image_size == 'Zoomfit':
-            self.load_image_fit()
-        else:
-            self.load_image_1to1()
-        self.pixbuf = self.rotated_flipped(self.pixbuf)
-        self.image.set_from_pixbuf(self.pixbuf)
 
     def default_zoom_ratio(self, button, current):
         self.image_size = current.get_name()
-        self.reload_image()
+        self.load_image()
+        self.pixbuf = self.rotated_flipped(self.pixbuf)
+        self.image.set_from_pixbuf(self.pixbuf)
 
     def image_zoom_in(self, button):
         self.image_zoom(1.25)
@@ -305,6 +288,8 @@ class Imagewindow(Gtk.Window):
             self.image_index = 0
         self.filename = self.filelist[self.image_index]
         self.load_image()
+        self.image.set_from_pixbuf(self.pixbuf)
+        self.new_image_reset()
 
     def go_next_image(self, button):
         self.goto_next_image()
@@ -316,6 +301,8 @@ class Imagewindow(Gtk.Window):
             self.image_index = len(self.filelist)-1
         self.filename = self.filelist[self.image_index]
         self.load_image()
+        self.image.set_from_pixbuf(self.pixbuf)
+        self.new_image_reset()
 
     def image_rotate_left(self, button):
         if self.rotate_state > 0:
@@ -323,7 +310,9 @@ class Imagewindow(Gtk.Window):
         else:
             self.rotate_state = 3
         self.win_width, self.win_height = self.win_height, self.win_width
-        self.reload_image()
+        self.load_image()
+        self.pixbuf = self.rotated_flipped(self.pixbuf)
+        self.image.set_from_pixbuf(self.pixbuf)
 
     def image_rotate_right(self, button):
         if self.rotate_state < 3:
@@ -331,7 +320,9 @@ class Imagewindow(Gtk.Window):
         else:
             self.rotate_state = 0
         self.win_width, self.win_height = self.win_height, self.win_width
-        self.reload_image()
+        self.load_image()
+        self.pixbuf = self.rotated_flipped(self.pixbuf)
+        self.image.set_from_pixbuf(self.pixbuf)
 
     def image_flip_horiz(self, button):
         self.pixbuf = self.pixbuf.flip(True)
@@ -383,6 +374,8 @@ class Imagewindow(Gtk.Window):
             return 0
         dialog.destroy()
         self.load_image()
+        self.image.set_from_pixbuf(self.pixbuf)
+        self.new_image_reset()
         os.chdir(os.path.dirname(self.filename))
         filelist = os.listdir()
         self.filelist = [name for name in filelist if name.split('.')[-1].lower() in self.format_list]
@@ -407,6 +400,8 @@ class Imagewindow(Gtk.Window):
         self.image_index = 0
         self.filename = self.filelist[0]
         self.load_image()
+        self.image.set_from_pixbuf(self.pixbuf)
+        self.new_image_reset()
 
     def save_image(self, button):
         dialog = Gtk.FileChooserDialog('Please write a name for your image', self,
@@ -442,6 +437,7 @@ class Imagewindow(Gtk.Window):
                 self.win_height = allocation.height
                 self.win_ratio = self.win_width/self.win_height
                 self.load_image()
+                self.image.set_from_pixbuf(self.pixbuf)
         except:
             pass
 
@@ -461,7 +457,7 @@ class Imagewindow(Gtk.Window):
         'along with Cheesemaker. If not, see http://www.gnu.org/licenses/gpl.html')
         about = Gtk.AboutDialog()
         about.set_program_name('Cheesemaker')
-        about.set_version('0.1.0')
+        about.set_version('0.1.1')
         about.set_license(license)
         about.set_wrap_license(True)
         about.set_comments('An image viewer')
