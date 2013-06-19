@@ -163,8 +163,8 @@ class Imagewindow(Gtk.Window):
 
         action_group.add_toggle_actions([
             ('Desaturate', None, 'Toggle _grayscale', None, 'Toggle grayscale', self.toggle_gray),
-            ('Full', Gtk.STOCK_FULLSCREEN, 'Fullscreen', 'F11', 'Fullscreen', self.toggle_full),
-            ('Slides', None, 'Slideshow', 'F5', 'Slideshow', self.toggle_slides),
+            ('Full', Gtk.STOCK_FULLSCREEN, '_Fullscreen', 'F11', 'Fullscreen', self.toggle_full),
+            ('Slides', None, '_Slideshow', 'F5', 'Slideshow', self.toggle_slides),
             ('ShowMenuBar', None, 'Show _menubar', None, 'Show menubar', self.toggle_menu, True),
             ('ShowToolBar', None, 'Show _toolbar', None, 'Show toolbar', self.toggle_tool, True)
             ])
@@ -255,7 +255,6 @@ class Imagewindow(Gtk.Window):
             self.reload_image()
 
     def load_image(self):
-        self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
         if self.image_size == 'Zoomfit':
             self.load_image_fit()
         else:
@@ -263,30 +262,24 @@ class Imagewindow(Gtk.Window):
         self.new_image_reset()
 
     def load_image_fit(self):
-        self.img_width = self.pixbuf.get_width()
-        self.img_height = self.pixbuf.get_height()
-        self.img_ratio = self.img_width/self.img_height
-        if self.win_ratio > self.img_ratio:
-            self.width = min(self.win_height*self.img_ratio, self.img_width)
-            self.height = self.win_height
-        else:
-            self.height = min(self.win_width/self.img_ratio, self.img_height)
-            self.width = self.win_width
-        self.pixbuf = self.pixbuf.scale_simple(self.width, self.height, GdkPixbuf.InterpType.BILINEAR)
+        self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.win_width, self.win_height)
+        self.width = self.pixbuf.get_width()
+        self.height = self.pixbuf.get_height()
         self.image.set_from_pixbuf(self.pixbuf)
 
     def load_image_1to1(self):
+        self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
         self.width = self.pixbuf.get_width()
         self.height = self.pixbuf.get_height()
         self.image.set_from_pixbuf(self.pixbuf)
 
     def reload_image(self):
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
-        self.pixbuf = self.rotated_flipped(pixbuf)
         if self.image_size == 'Zoomfit':
             self.load_image_fit()
         else:
             self.load_image_1to1()
+        self.pixbuf = self.rotated_flipped(self.pixbuf)
+        self.image.set_from_pixbuf(self.pixbuf)
 
     def default_zoom_ratio(self, button, current):
         self.image_size = current.get_name()
@@ -329,6 +322,7 @@ class Imagewindow(Gtk.Window):
             self.rotate_state -= 1
         else:
             self.rotate_state = 3
+        self.win_width, self.win_height = self.win_height, self.win_width
         self.reload_image()
 
     def image_rotate_right(self, button):
@@ -336,6 +330,7 @@ class Imagewindow(Gtk.Window):
             self.rotate_state += 1
         else:
             self.rotate_state = 0
+        self.win_width, self.win_height = self.win_height, self.win_width
         self.reload_image()
 
     def image_flip_horiz(self, button):
@@ -419,6 +414,7 @@ class Imagewindow(Gtk.Window):
             (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
              Gtk.STOCK_SAVE, Gtk.ResponseType.OK))
         dialog.set_current_name('Gumby')
+        dialog.set_do_overwrite_confirmation(True)
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
             name = dialog.get_filename()
