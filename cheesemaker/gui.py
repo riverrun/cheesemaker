@@ -249,10 +249,10 @@ class Imagewindow(Gtk.Window):
         if button.get_active():
             self.pixbuf.saturate_and_pixelate(self.pixbuf, 0.0, False)
             self.grays = True
-            self.image.set_from_pixbuf(self.pixbuf)
         else:
             self.grays = False
             self.load_image()
+        self.image.set_from_pixbuf(self.pixbuf)
 
     def load_image(self):
         if self.image_size == 'Zoomfit':
@@ -435,8 +435,8 @@ class Imagewindow(Gtk.Window):
             if self.win_width != allocation.width or self.win_height != allocation.height:
                 self.win_width = allocation.width
                 self.win_height = allocation.height
-                self.win_ratio = self.win_width/self.win_height
                 self.load_image()
+                self.pixbuf = self.rotated_flipped(self.pixbuf)
                 self.image.set_from_pixbuf(self.pixbuf)
         except:
             pass
