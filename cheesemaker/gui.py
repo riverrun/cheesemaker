@@ -316,8 +316,10 @@ class Imagewindow(Gtk.Window):
             self.rotate_state -= 1
         else:
             self.rotate_state = 3
-        self.win_width, self.win_height = self.win_height, self.win_width
-        self.load_image()
+        if self.rotate_state % 2:
+            self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.height, self.width)
+        else:
+            self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.width, self.height)
         self.pixbuf = self.rotated_flipped(self.pixbuf)
         self.image.set_from_pixbuf(self.pixbuf)
 
@@ -326,8 +328,10 @@ class Imagewindow(Gtk.Window):
             self.rotate_state += 1
         else:
             self.rotate_state = 0
-        self.win_width, self.win_height = self.win_height, self.win_width
-        self.load_image()
+        if self.rotate_state % 2:
+            self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.height, self.width)
+        else:
+            self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.width, self.height)
         self.pixbuf = self.rotated_flipped(self.pixbuf)
         self.image.set_from_pixbuf(self.pixbuf)
 
@@ -467,7 +471,7 @@ class Imagewindow(Gtk.Window):
         about.set_version('0.1.2')
         about.set_license(license)
         about.set_wrap_license(True)
-        about.set_comments('An image viewer')
+        about.set_comments('A simple image viewer.')
         about.set_authors(['David Whitlock <alovedalongthe@gmail.com>'])
         about.set_logo_icon_name('cheesemaker')
         about.run()
