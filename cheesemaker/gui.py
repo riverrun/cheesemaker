@@ -108,6 +108,7 @@ class Imagewindow(Gtk.Window):
         self.image = Gtk.Image()
         self.set_bg_color()
         self.image_size = 'Zoomfit'
+        self.load_image = self.load_image_fit
         self.win_width = 0
         self.win_height = 0
 
@@ -254,16 +255,22 @@ class Imagewindow(Gtk.Window):
             self.load_image()
         self.image.set_from_pixbuf(self.pixbuf)
 
-    def load_image(self):
-        if self.image_size == 'Zoomfit':
-            self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.win_width, self.win_height)
-        else:
-            self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
+    def load_image_fit(self):
+        self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.win_width, self.win_height)
+        self.width = self.pixbuf.get_width()
+        self.height = self.pixbuf.get_height()
+
+    def load_image_1to1(self):
+        self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
         self.width = self.pixbuf.get_width()
         self.height = self.pixbuf.get_height()
 
     def default_zoom_ratio(self, button, current):
         self.image_size = current.get_name()
+        if self.image_size == 'Zoomfit':
+            self.load_image = self.load_image_fit
+        else:
+            self.load_image = self.load_image_1to1
         self.load_image()
         self.pixbuf = self.rotated_flipped(self.pixbuf)
         self.image.set_from_pixbuf(self.pixbuf)
@@ -457,7 +464,7 @@ class Imagewindow(Gtk.Window):
         'along with Cheesemaker. If not, see http://www.gnu.org/licenses/gpl.html')
         about = Gtk.AboutDialog()
         about.set_program_name('Cheesemaker')
-        about.set_version('0.1.1')
+        about.set_version('0.1.2')
         about.set_license(license)
         about.set_wrap_license(True)
         about.set_comments('An image viewer')
