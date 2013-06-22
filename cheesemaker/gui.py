@@ -49,6 +49,7 @@ ui_info = """
       <separator/>
       <menuitem action='Full'/>
       <menuitem action='Slides'/>
+      <menuitem action='RandomSlides'/>
       <separator/>
       <menu action='ZoomMenu'>
         <menuitem action='Zoomin'/>
@@ -84,6 +85,7 @@ ui_info = """
     <separator/>
     <menuitem action='Full'/>
     <menuitem action='Slides'/>
+    <menuitem action='RandomSlides'/>
     <separator/>
     <menuitem action='ShowMenuBar'/>
     <menuitem action='ShowToolBar'/>
@@ -166,6 +168,7 @@ class Imagewindow(Gtk.Window):
             ('Desaturate', None, 'Toggle _grayscale', None, 'Toggle grayscale', self.toggle_gray),
             ('Full', Gtk.STOCK_FULLSCREEN, '_Fullscreen', 'F11', 'Fullscreen', self.toggle_full),
             ('Slides', None, '_Slideshow', 'F5', 'Slideshow', self.toggle_slides),
+            ('RandomSlides', None, '_Random slideshow', 'F8', 'Random slideshow', self.toggle_slidesrandom),
             ('ShowMenuBar', None, 'Show _menubar', None, 'Show menubar', self.toggle_menu, True),
             ('ShowToolBar', None, 'Show _toolbar', None, 'Show toolbar', self.toggle_tool, True)
             ])
@@ -194,18 +197,24 @@ class Imagewindow(Gtk.Window):
         self.grid.attach(self.scrolledwindow, 0, 2, 1, 1)
         self.scrolledwindow.add_with_viewport(self.image)
 
-    def toggle_slides(self, button):
+    def toggle_slides(self, button, showrandom=False):
         if button.get_active():
             self.set_fullscreen()
-            self.timer_delay = GLib.timeout_add_seconds(5, self.start_slideshow)
+            self.timer_delay = GLib.timeout_add_seconds(5, self.start_slideshow, showrandom)
         else:
             GLib.source_remove(self.timer_delay)
             self.set_unfullscreen()
 
+    def toggle_slidesrandom(self, button):
+        self.toggle_slides(button, True)
+
     def start_slideshow(self, showrandom=False):
         if showrandom:
-            random.shuffle(self.filelist)
-        self.goto_next_image()
+            self.filename = random.choice(self.filelist)
+            self.load_image()
+            self.image.set_from_pixbuf(self.pixbuf)
+        else:
+            self.goto_next_image()
         return True
 
     def toggle_full(self, button):
@@ -257,13 +266,13 @@ class Imagewindow(Gtk.Window):
 
     def load_image_fit(self):
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.win_width, self.win_height)
-        self.width = self.pixbuf.get_width()
-        self.height = self.pixbuf.get_height()
+        self.img_width = self.pixbuf.get_width()
+        self.img_height = self.pixbuf.get_height()
 
     def load_image_1to1(self):
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
-        self.width = self.pixbuf.get_width()
-        self.height = self.pixbuf.get_height()
+        self.img_width = self.pixbuf.get_width()
+        self.img_height = self.pixbuf.get_height()
 
     def default_zoom_ratio(self, button, current):
         self.image_size = current.get_name()
@@ -284,8 +293,8 @@ class Imagewindow(Gtk.Window):
     def image_zoom(self, zoomratio):
         pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
         self.pixbuf = self.rotated_flipped(pixbuf)
-        self.width, self.height = self.width*zoomratio, self.height*zoomratio
-        self.pixbuf = self.pixbuf.scale_simple(self.width, self.height, GdkPixbuf.InterpType.BILINEAR)
+        self.img_width, self.img_height = self.img_width*zoomratio, self.img_height*zoomratio
+        self.pixbuf = self.pixbuf.scale_simple(self.img_width, self.img_height, GdkPixbuf.InterpType.BILINEAR)
         self.image.set_from_pixbuf(self.pixbuf)
 
     def goto_next_image(self):
@@ -317,9 +326,9 @@ class Imagewindow(Gtk.Window):
         else:
             self.rotate_state = 3
         if self.rotate_state % 2:
-            self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.height, self.width)
+            self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.img_height, self.img_width)
         else:
-            self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.width, self.height)
+            self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.img_width, self.img_height)
         self.pixbuf = self.rotated_flipped(self.pixbuf)
         self.image.set_from_pixbuf(self.pixbuf)
 
@@ -329,9 +338,9 @@ class Imagewindow(Gtk.Window):
         else:
             self.rotate_state = 0
         if self.rotate_state % 2:
-            self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.height, self.width)
+            self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.img_height, self.img_width)
         else:
-            self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.width, self.height)
+            self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.img_width, self.img_height)
         self.pixbuf = self.rotated_flipped(self.pixbuf)
         self.image.set_from_pixbuf(self.pixbuf)
 
@@ -415,26 +424,24 @@ class Imagewindow(Gtk.Window):
         self.new_image_reset()
 
     def save_image(self, button):
+        filetype = GdkPixbuf.Pixbuf.get_file_info(self.filename)[0].get_name()
+        extension = filetype.replace('e', '')
+        filename = 'Gumby.' + extension
         dialog = Gtk.FileChooserDialog('Please write a name for your image', self,
             Gtk.FileChooserAction.SAVE,
             (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
              Gtk.STOCK_SAVE, Gtk.ResponseType.OK))
-        dialog.set_current_name('Gumby')
+        dialog.set_current_name(filename)
         dialog.set_do_overwrite_confirmation(True)
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
-            name = dialog.get_filename()
+            filename = dialog.get_filename()
         else:
             dialog.destroy()
             return 0
         dialog.destroy()
-        filetype = GdkPixbuf.Pixbuf.get_file_info(self.filename)[0].get_name()
-        image_size = GdkPixbuf.Pixbuf.get_file_info(self.filename)[1:]
-        self.width, self.height = image_size[0], image_size[1]
         pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
         image = self.rotated_flipped(pixbuf)
-        extension = filetype.replace('e', '')
-        filename = name + '.' + extension
         image.savev(filename, filetype, [], [])
 
     def on_button_press(self, widget, event, popup):
