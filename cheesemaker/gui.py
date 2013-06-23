@@ -216,11 +216,9 @@ class Imagewindow(Gtk.Window):
         if button.get_active():
             self.set_fullscreen()
             self.timer_delay = GLib.timeout_add_seconds(5, self.start_slideshow)
-            self.showing_slides = True
         else:
             GLib.source_remove(self.timer_delay)
             self.set_unfullscreen()
-            self.showing_slides = False
 
     def start_slideshow(self):
         if self.slideshow_type:
