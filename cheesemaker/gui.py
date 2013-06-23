@@ -49,7 +49,10 @@ ui_info = """
       <separator/>
       <menuitem action='Full'/>
       <menuitem action='Slides'/>
-      <menuitem action='RandomSlides'/>
+      <menu action='SlidesOpts'>
+        <menuitem action='NextSlides'/>
+        <menuitem action='RandomSlides'/>
+      </menu>
       <separator/>
       <menu action='ZoomMenu'>
         <menuitem action='Zoomin'/>
@@ -85,7 +88,10 @@ ui_info = """
     <separator/>
     <menuitem action='Full'/>
     <menuitem action='Slides'/>
-    <menuitem action='RandomSlides'/>
+    <menu action='SlidesOpts'>
+      <menuitem action='NextSlides'/>
+      <menuitem action='RandomSlides'/>
+    </menu>
     <separator/>
     <menuitem action='ShowMenuBar'/>
     <menuitem action='ShowToolBar'/>
@@ -129,6 +135,7 @@ class Imagewindow(Gtk.Window):
 
         self.showmenubar = True
         self.showtoolbar = True
+        self.slideshow_type = 'NextSlides'
 
         popup = uimanager.get_widget('/PopupMenu')
         self.set_events(Gdk.EventMask.BUTTON_PRESS_MASK|Gdk.EventMask.STRUCTURE_MASK)
@@ -155,6 +162,7 @@ class Imagewindow(Gtk.Window):
             ('ViewMenu', None, '_View'),
             ('Nextimg', Gtk.STOCK_GO_FORWARD, '_Next image', '<Alt>Right', 'Next image', self.go_next_image),
             ('Previmg', Gtk.STOCK_GO_BACK, '_Previous image', '<Alt>Left', 'Previous image', self.go_prev_image),
+            ('SlidesOpts', None, 'S_lideshow options'),
             ('ZoomMenu', None, '_Zoom'),
             ('Zoomin', Gtk.STOCK_ZOOM_IN, 'Zoom in', '<Ctrl>Up', 'Zoom in', self.image_zoom_in),
             ('Zoomout', Gtk.STOCK_ZOOM_OUT, 'Zoom out', '<Ctrl>Down', 'Zoom out', self.image_zoom_out),
@@ -168,10 +176,14 @@ class Imagewindow(Gtk.Window):
             ('Desaturate', None, 'Toggle _grayscale', None, 'Toggle grayscale', self.toggle_gray),
             ('Full', Gtk.STOCK_FULLSCREEN, '_Fullscreen', 'F11', 'Fullscreen', self.toggle_full),
             ('Slides', None, '_Slideshow', 'F5', 'Slideshow', self.toggle_slides),
-            ('RandomSlides', None, '_Random slideshow', 'F8', 'Random slideshow', self.toggle_slidesrandom),
             ('ShowMenuBar', None, 'Show _menubar', None, 'Show menubar', self.toggle_menu, True),
             ('ShowToolBar', None, 'Show _toolbar', None, 'Show toolbar', self.toggle_tool, True)
             ])
+
+        action_group.add_radio_actions([
+            ('NextSlides', None, '_Next image', None, 'Next image', 1),
+            ('RandomSlides', None, '_Random image', None, 'Random image', 0)
+            ], 1, self.slideshow_options)
 
         action_group.add_radio_actions([
             ('Zoom1to1', Gtk.STOCK_ZOOM_100, 'Original size', '<Ctrl>0', 'Original size', 1),
@@ -197,24 +209,26 @@ class Imagewindow(Gtk.Window):
         self.grid.attach(self.scrolledwindow, 0, 2, 1, 1)
         self.scrolledwindow.add_with_viewport(self.image)
 
-    def toggle_slides(self, button, showrandom=False):
+    def slideshow_options(self, button, current):
+        self.slideshow_type = current.get_current_value()
+
+    def toggle_slides(self, button):
         if button.get_active():
             self.set_fullscreen()
-            self.timer_delay = GLib.timeout_add_seconds(5, self.start_slideshow, showrandom)
+            self.timer_delay = GLib.timeout_add_seconds(5, self.start_slideshow)
+            self.showing_slides = True
         else:
             GLib.source_remove(self.timer_delay)
             self.set_unfullscreen()
+            self.showing_slides = False
 
-    def toggle_slidesrandom(self, button):
-        self.toggle_slides(button, True)
-
-    def start_slideshow(self, showrandom=False):
-        if showrandom:
+    def start_slideshow(self):
+        if self.slideshow_type:
+            self.goto_next_image()
+        else:
             self.filename = random.choice(self.filelist)
             self.load_image()
             self.image.set_from_pixbuf(self.pixbuf)
-        else:
-            self.goto_next_image()
         return True
 
     def toggle_full(self, button):
@@ -475,7 +489,7 @@ class Imagewindow(Gtk.Window):
         'along with Cheesemaker. If not, see http://www.gnu.org/licenses/gpl.html')
         about = Gtk.AboutDialog()
         about.set_program_name('Cheesemaker')
-        about.set_version('0.1.2')
+        about.set_version('0.1.4')
         about.set_license(license)
         about.set_wrap_license(True)
         about.set_comments('A simple image viewer.')
