@@ -472,7 +472,9 @@ class Imagewindow(Gtk.Window):
             pass
 
     def help_page(self, button):
-        pass
+        dialog = HelpDialog(self)
+        dialog.run()
+        dialog.destroy()
 
     def about_dialog(self, button):
         license = ('Cheesemaker is free software: you can redistribute it and/or modify '
@@ -498,6 +500,29 @@ class Imagewindow(Gtk.Window):
 
     def quit_app(self, widget):
         Gtk.main_quit()
+
+class HelpDialog(Gtk.Dialog):
+    def __init__(self, parent):
+        Gtk.Dialog.__init__(self, 'Help page', parent, 0,
+            (Gtk.STOCK_OK, Gtk.ResponseType.OK))
+
+        self.set_default_size(650, 500)
+
+        if os.path.isfile('/usr/share/cheesemaker/help_page'):
+            with open('/usr/share/cheesemaker/help_page') as help_file:
+                text = help_file.read()
+        else:
+            with open('/usr/local/share/cheesemaker/help_page') as help_file:
+                text = help_file.read()
+        label = Gtk.Label()
+        label.set_markup(text)
+        label.set_line_wrap(True)
+
+        scrolledwindow = Gtk.ScrolledWindow()
+        scrolledwindow.add_with_viewport(label)
+        box = self.get_content_area()
+        box.pack_start(scrolledwindow, True, True, 0)
+        self.show_all()
 
 def main():
     win = Imagewindow()

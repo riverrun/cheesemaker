@@ -29,6 +29,7 @@ setup(
     data_files = [
         ('share/applications', ['cheesemaker.desktop']),
         ('share/pixmaps', ['cheesemaker.png']),
+        ('share/cheesemaker', ['help_page']),
         ],
     author = 'David Whitlock',
     author_email = 'alovedalongthe@gmail.com',
