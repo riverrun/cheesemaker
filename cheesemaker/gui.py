@@ -60,6 +60,8 @@ ui_info = """
         <menuitem action='Zoom1to1'/>
         <menuitem action='Zoomfit'/>
       </menu>
+      <separator/>
+      <menuitem action='BgColor'/>
     </menu>
     <menu action='HelpMenu'>
       <menuitem action='Help'/>
@@ -114,7 +116,7 @@ class Imagewindow(Gtk.Window):
         self.set_default_size(700, 500)
         self.set_default_icon_name('cheesemaker')
         self.image = Gtk.Image()
-        self.set_bg_color()
+        self.image.override_background_color(Gtk.StateType.NORMAL, Gdk.RGBA(0.0, 0.0, 0.0, 1.0))
         self.image_size = 'Zoomfit'
         self.load_image = self.load_image_fit
         self.win_width = 0
@@ -166,6 +168,7 @@ class Imagewindow(Gtk.Window):
             ('ZoomMenu', None, '_Zoom'),
             ('Zoomin', Gtk.STOCK_ZOOM_IN, 'Zoom in', '<Ctrl>Up', 'Zoom in', self.image_zoom_in),
             ('Zoomout', Gtk.STOCK_ZOOM_OUT, 'Zoom out', '<Ctrl>Down', 'Zoom out', self.image_zoom_out),
+            ('BgColor', None, 'Change background color', None, 'Change background color', self.set_bg_color),
             ('HelpMenu', None, '_Help'),
             ('Help', Gtk.STOCK_HELP, 'Help', 'F1', 'Open the help page', self.help_page),
             ('About', Gtk.STOCK_ABOUT, 'About', None, 'About', self.about_dialog),
@@ -197,9 +200,13 @@ class Imagewindow(Gtk.Window):
         self.add_accel_group(accelgroup)
         return uimanager
 
-    def set_bg_color(self):
-        bg_color = Gdk.Color.parse('black')
-        self.image.modify_bg(Gtk.StateType.NORMAL, bg_color[1])
+    def set_bg_color(self, button):
+        dialog = Gtk.ColorChooserDialog('Please choose a color')
+        response = dialog.run()
+        if response == Gtk.ResponseType.OK:
+            bg_color = dialog.get_rgba()
+            self.image.override_background_color(Gtk.StateType.NORMAL, bg_color)
+        dialog.destroy()
 
     def imageview(self):
         self.scrolledwindow = Gtk.ScrolledWindow()
@@ -504,9 +511,10 @@ class Imagewindow(Gtk.Window):
 class HelpDialog(Gtk.Dialog):
     def __init__(self, parent):
         Gtk.Dialog.__init__(self, 'Help page', parent, 0,
-            (Gtk.STOCK_OK, Gtk.ResponseType.OK))
+            (Gtk.STOCK_CLOSE, Gtk.ResponseType.CLOSE))
 
         self.set_default_size(650, 500)
+        self.set_default_response(Gtk.ResponseType.CLOSE)
 
         if os.path.isfile('/usr/share/cheesemaker/help_page'):
             with open('/usr/share/cheesemaker/help_page') as help_file:
