@@ -19,7 +19,7 @@
 
 from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
 import os, random
-from . import dialogs
+from . import prefs
 
 ui_info = """
 <ui>
@@ -40,6 +40,8 @@ ui_info = """
       <menuitem action='Flipvert'/>
       <separator/>
       <menuitem action='Desaturate'/>
+      <separator/>
+      <menuitem action='Prefs'/>
     </menu>
     <menu action='ViewMenu'>
       <menuitem action='Nextimg'/>
@@ -53,8 +55,6 @@ ui_info = """
       <menu action='SlidesOpts'>
         <menuitem action='NextSlides'/>
         <menuitem action='RandomSlides'/>
-        <separator/>
-        <menuitem action='SetDelay'/>
       </menu>
       <separator/>
       <menu action='ZoomMenu'>
@@ -63,8 +63,6 @@ ui_info = """
         <menuitem action='Zoom1to1'/>
         <menuitem action='Zoomfit'/>
       </menu>
-      <separator/>
-      <menuitem action='BgColor'/>
     </menu>
     <menu action='HelpMenu'>
       <menuitem action='Help'/>
@@ -96,8 +94,6 @@ ui_info = """
     <menu action='SlidesOpts'>
       <menuitem action='NextSlides'/>
       <menuitem action='RandomSlides'/>
-      <separator/>
-      <menuitem action='SetDelay'/>
     </menu>
     <separator/>
     <menuitem action='ShowMenuBar'/>
@@ -143,7 +139,7 @@ class Imagewindow(Gtk.Window):
         self.showmenubar = True
         self.showtoolbar = True
         self.slideshow_type = 'NextSlides'
-        self.slides_delay = 5
+        self.slide_delay = 5
 
         popup = uimanager.get_widget('/PopupMenu')
         self.set_events(Gdk.EventMask.BUTTON_PRESS_MASK|Gdk.EventMask.STRUCTURE_MASK)
@@ -167,15 +163,14 @@ class Imagewindow(Gtk.Window):
             ('Rotateright', None, 'Rotate _right', '<Ctrl>Right', 'Rotate right', self.image_rotate_right),
             ('Fliphoriz', None, 'FLip _horizontally', '<Ctrl>H', 'Flip horizontally', self.image_flip_horiz),
             ('Flipvert', None, 'FLip _vertically', '<Ctrl>V', 'Flip vertically', self.image_flip_vert),
+            ('Prefs', None, 'Preferences', '<Ctrl>P', 'Preferences', self.set_preferences),
             ('ViewMenu', None, '_View'),
             ('Nextimg', Gtk.STOCK_GO_FORWARD, '_Next image', '<Alt>Right', 'Next image', self.go_next_image),
             ('Previmg', Gtk.STOCK_GO_BACK, '_Previous image', '<Alt>Left', 'Previous image', self.go_prev_image),
             ('SlidesOpts', None, 'S_lideshow options'),
-            ('SetDelay', None, 'Set time between images', None, 'Set time between images', self.set_slides_time),
             ('ZoomMenu', None, '_Zoom'),
             ('Zoomin', Gtk.STOCK_ZOOM_IN, 'Zoom in', '<Ctrl>Up', 'Zoom in', self.image_zoom_in),
             ('Zoomout', Gtk.STOCK_ZOOM_OUT, 'Zoom out', '<Ctrl>Down', 'Zoom out', self.image_zoom_out),
-            ('BgColor', None, 'Change background color', None, 'Change background color', self.set_bg_color),
             ('HelpMenu', None, '_Help'),
             ('Help', Gtk.STOCK_HELP, 'Help', 'F1', 'Open the help page', self.help_page),
             ('About', Gtk.STOCK_ABOUT, 'About', None, 'About', self.about_dialog),
@@ -207,14 +202,6 @@ class Imagewindow(Gtk.Window):
         self.add_accel_group(accelgroup)
         return uimanager
 
-    def set_bg_color(self, button):
-        dialog = Gtk.ColorChooserDialog('Please choose a color')
-        response = dialog.run()
-        if response == Gtk.ResponseType.OK:
-            bg_color = dialog.get_rgba()
-            self.image.override_background_color(Gtk.StateType.NORMAL, bg_color)
-        dialog.destroy()
-
     def imageview(self):
         self.scrolledwindow = Gtk.ScrolledWindow()
         self.scrolledwindow.set_hexpand(True)
@@ -223,20 +210,18 @@ class Imagewindow(Gtk.Window):
         self.grid.attach(self.scrolledwindow, 0, 2, 1, 1)
         self.scrolledwindow.add_with_viewport(self.image)
 
-    def slideshow_options(self, button, current):
-        self.slideshow_type = current.get_current_value()
-
-    def set_slides_time(self, button):
-        dialog = dialogs.SlidesDelay(self)
+    def set_preferences(self, button):
+        dialog = prefs.PrefsDialog(self)
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
-            self.slides_delay = dialog.choose_delay.get_value_as_int()
+            self.slide_delay = dialog.choose_delay.get_value_as_int()
+            self.image.override_background_color(Gtk.StateType.NORMAL, dialog.bg_color)
         dialog.destroy()
 
     def toggle_slides(self, button):
         if button.get_active():
             self.set_fullscreen()
-            self.timer_delay = GLib.timeout_add_seconds(self.slides_delay, self.start_slideshow)
+            self.timer_delay = GLib.timeout_add_seconds(self.slide_delay, self.start_slideshow)
         else:
             GLib.source_remove(self.timer_delay)
             self.set_unfullscreen()
@@ -249,6 +234,9 @@ class Imagewindow(Gtk.Window):
             self.load_image()
             self.image.set_from_pixbuf(self.pixbuf)
         return True
+
+    def slideshow_options(self, button, current):
+        self.slideshow_type = current.get_current_value()
 
     def toggle_full(self, button):
         if button.get_active():
@@ -493,7 +481,7 @@ class Imagewindow(Gtk.Window):
             pass
 
     def help_page(self, button):
-        dialog = dialogs.HelpDialog(self)
+        dialog = prefs.HelpDialog(self)
         dialog.run()
         dialog.destroy()
 
