@@ -19,6 +19,7 @@
 
 from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
 import os, random
+from . import dialogs
 
 ui_info = """
 <ui>
@@ -52,6 +53,8 @@ ui_info = """
       <menu action='SlidesOpts'>
         <menuitem action='NextSlides'/>
         <menuitem action='RandomSlides'/>
+        <separator/>
+        <menuitem action='SetDelay'/>
       </menu>
       <separator/>
       <menu action='ZoomMenu'>
@@ -93,6 +96,8 @@ ui_info = """
     <menu action='SlidesOpts'>
       <menuitem action='NextSlides'/>
       <menuitem action='RandomSlides'/>
+      <separator/>
+      <menuitem action='SetDelay'/>
     </menu>
     <separator/>
     <menuitem action='ShowMenuBar'/>
@@ -138,6 +143,7 @@ class Imagewindow(Gtk.Window):
         self.showmenubar = True
         self.showtoolbar = True
         self.slideshow_type = 'NextSlides'
+        self.slides_delay = 5
 
         popup = uimanager.get_widget('/PopupMenu')
         self.set_events(Gdk.EventMask.BUTTON_PRESS_MASK|Gdk.EventMask.STRUCTURE_MASK)
@@ -165,6 +171,7 @@ class Imagewindow(Gtk.Window):
             ('Nextimg', Gtk.STOCK_GO_FORWARD, '_Next image', '<Alt>Right', 'Next image', self.go_next_image),
             ('Previmg', Gtk.STOCK_GO_BACK, '_Previous image', '<Alt>Left', 'Previous image', self.go_prev_image),
             ('SlidesOpts', None, 'S_lideshow options'),
+            ('SetDelay', None, 'Set time between images', None, 'Set time between images', self.set_slides_time),
             ('ZoomMenu', None, '_Zoom'),
             ('Zoomin', Gtk.STOCK_ZOOM_IN, 'Zoom in', '<Ctrl>Up', 'Zoom in', self.image_zoom_in),
             ('Zoomout', Gtk.STOCK_ZOOM_OUT, 'Zoom out', '<Ctrl>Down', 'Zoom out', self.image_zoom_out),
@@ -189,7 +196,7 @@ class Imagewindow(Gtk.Window):
             ], 1, self.slideshow_options)
 
         action_group.add_radio_actions([
-            ('Zoom1to1', Gtk.STOCK_ZOOM_100, 'Original size', '<Ctrl>0', 'Original size', 1),
+            ('Zoom1to1', Gtk.STOCK_ZOOM_100, 'Normal size', 'N', 'Normal (original) size', 1),
             ('Zoomfit', Gtk.STOCK_ZOOM_FIT, 'Best fit', 'F', 'Best fit', 0)
             ], 0, self.default_zoom_ratio)
 
@@ -219,10 +226,17 @@ class Imagewindow(Gtk.Window):
     def slideshow_options(self, button, current):
         self.slideshow_type = current.get_current_value()
 
+    def set_slides_time(self, button):
+        dialog = dialogs.SlidesDelay(self)
+        response = dialog.run()
+        if response == Gtk.ResponseType.OK:
+            self.slides_delay = dialog.choose_delay.get_value_as_int()
+        dialog.destroy()
+
     def toggle_slides(self, button):
         if button.get_active():
             self.set_fullscreen()
-            self.timer_delay = GLib.timeout_add_seconds(5, self.start_slideshow)
+            self.timer_delay = GLib.timeout_add_seconds(self.slides_delay, self.start_slideshow)
         else:
             GLib.source_remove(self.timer_delay)
             self.set_unfullscreen()
@@ -479,7 +493,7 @@ class Imagewindow(Gtk.Window):
             pass
 
     def help_page(self, button):
-        dialog = HelpDialog(self)
+        dialog = dialogs.HelpDialog(self)
         dialog.run()
         dialog.destroy()
 
@@ -507,30 +521,6 @@ class Imagewindow(Gtk.Window):
 
     def quit_app(self, widget):
         Gtk.main_quit()
-
-class HelpDialog(Gtk.Dialog):
-    def __init__(self, parent):
-        Gtk.Dialog.__init__(self, 'Help page', parent, 0,
-            (Gtk.STOCK_CLOSE, Gtk.ResponseType.CLOSE))
-
-        self.set_default_size(650, 500)
-        self.set_default_response(Gtk.ResponseType.CLOSE)
-
-        if os.path.isfile('/usr/share/cheesemaker/help_page'):
-            with open('/usr/share/cheesemaker/help_page') as help_file:
-                text = help_file.read()
-        else:
-            with open('/usr/local/share/cheesemaker/help_page') as help_file:
-                text = help_file.read()
-        label = Gtk.Label()
-        label.set_markup(text)
-        label.set_line_wrap(True)
-
-        scrolledwindow = Gtk.ScrolledWindow()
-        scrolledwindow.add_with_viewport(label)
-        box = self.get_content_area()
-        box.pack_start(scrolledwindow, True, True, 0)
-        self.show_all()
 
 def main():
     win = Imagewindow()

@@ -28,7 +28,7 @@
 <span font="sans bold 11">Zoom options</span>
     <span font="serif bold 11">Ctrl + Up</span>    <span font="serif 11">Zoom in</span>
     <span font="serif bold 11">Ctrl + Down</span>    <span font="serif 11">Zoom out</span>
-    <span font="serif bold 11">Ctrl + 0</span>    <span font="serif 11">Original size</span>
+    <span font="serif bold 11">N</span>    <span font="serif 11">Normal (original) size</span>
     <span font="serif bold 11">F</span>    <span font="serif 11">Best fit</span>
 
 <span font="sans bold 12">Authors</span>
