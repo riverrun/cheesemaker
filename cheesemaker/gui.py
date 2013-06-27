@@ -289,11 +289,21 @@ class Imagewindow(Gtk.Window):
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.win_width, self.win_height)
         self.img_width = self.pixbuf.get_width()
         self.img_height = self.pixbuf.get_height()
+        self.apply_orientation()
 
     def load_image_1to1(self):
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
         self.img_width = self.pixbuf.get_width()
         self.img_height = self.pixbuf.get_height()
+        self.apply_orientation()
+
+    def apply_orientation(self):
+        orient = self.pixbuf.get_option('orientation')
+        if orient and int(orient) > 4:
+            if int(orient) == 8:
+                self.image_rotate_left(None)
+            else:
+                self.image_rotate_right(None)
 
     def default_zoom_ratio(self, button, current):
         self.image_size = current.get_name()
@@ -323,20 +333,20 @@ class Imagewindow(Gtk.Window):
             self.image_index += 1
         else:
             self.image_index = 0
+        self.new_image_reset()
         self.filename = self.filelist[self.image_index]
         self.load_image()
         self.image.set_from_pixbuf(self.pixbuf)
-        self.new_image_reset()
 
     def go_prev_image(self, button):
         if self.image_index > 0:
             self.image_index -= 1
         else:
             self.image_index = len(self.filelist)-1
+        self.new_image_reset()
         self.filename = self.filelist[self.image_index]
         self.load_image()
         self.image.set_from_pixbuf(self.pixbuf)
-        self.new_image_reset()
 
     def image_rotate_left(self, button):
         if self.rotate_state > 0:
@@ -411,9 +421,9 @@ class Imagewindow(Gtk.Window):
             dialog.destroy()
             return 0
         dialog.destroy()
+        self.new_image_reset()
         self.load_image()
         self.image.set_from_pixbuf(self.pixbuf)
-        self.new_image_reset()
         os.chdir(os.path.dirname(self.filename))
         filelist = os.listdir()
         self.filelist = [name for name in filelist if name.split('.')[-1].lower() in self.format_list]
@@ -436,10 +446,10 @@ class Imagewindow(Gtk.Window):
         self.filelist = [name for name in filelist if name.split('.')[-1].lower() in self.format_list]
         self.filelist.sort()
         self.image_index = 0
+        self.new_image_reset()
         self.filename = self.filelist[0]
         self.load_image()
         self.image.set_from_pixbuf(self.pixbuf)
-        self.new_image_reset()
 
     def save_image(self, button):
         filetype = GdkPixbuf.Pixbuf.get_file_info(self.filename)[0].get_name()
@@ -495,7 +505,7 @@ class Imagewindow(Gtk.Window):
         'along with Cheesemaker. If not, see http://www.gnu.org/licenses/gpl.html')
         about = Gtk.AboutDialog()
         about.set_program_name('Cheesemaker')
-        about.set_version('0.1.4')
+        about.set_version('0.1.5')
         about.set_license(license)
         about.set_wrap_license(True)
         about.set_comments('A simple image viewer.')
