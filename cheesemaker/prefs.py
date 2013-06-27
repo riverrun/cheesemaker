@@ -29,16 +29,23 @@ class Config(object):
         self.config_file = os.path.join(self.config_dir, 'cheesemaker')
         
 class PrefsDialog(Gtk.Dialog):
-    def __init__(self, parent):
+    def __init__(self, parent, auto_orientation):
         Gtk.Dialog.__init__(self, 'Preferences', parent, 0,
             (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
              Gtk.STOCK_OK, Gtk.ResponseType.OK))
 
-        self.set_default_size(300, 200)
+        self.set_default_size(300, 250)
         box = self.get_content_area()
         box.set_border_width(16)
 
+        self.auto_orientation = auto_orientation
         self.bg_color = Gdk.RGBA(0.0, 0.0, 0.0, 1.0)
+
+        orient_title = Gtk.Label()
+        box.pack_start(orient_title, True, True, 0)
+        self.orient_button = Gtk.CheckButton('Automatic orientation')
+        box.pack_start(self.orient_button, True, True, 0)
+        self.set_orient_view(orient_title)
 
         color_title = Gtk.Label()
         box.pack_start(color_title, True, True, 0)
@@ -53,6 +60,12 @@ class PrefsDialog(Gtk.Dialog):
         self.set_delay_view(slide_delay_title, slide_delay_box)
 
         self.show_all()
+
+    def set_orient_view(self, orient_title):
+        orient_title.set_markup('<b>Orientation</b>')
+        orient_title.set_halign(Gtk.Align.START)
+        #self.orient_button.connect('toggled', self.auto_orient)
+        self.orient_button.set_active(self.auto_orientation)
 
     def set_color_view(self, color_title, color_box):
         color_title.set_markup('<b>Background color</b>')
@@ -77,6 +90,9 @@ class PrefsDialog(Gtk.Dialog):
         self.choose_delay.set_update_policy(Gtk.SpinButtonUpdatePolicy.IF_VALID)
         self.choose_delay.set_tooltip_text('Choose the time between images')
         slide_delay_box.pack_start(self.choose_delay, True, True, 0)
+
+    def auto_orient(self, button):
+        pass
 
 class HelpDialog(Gtk.Dialog):
     def __init__(self, parent):

@@ -140,6 +140,7 @@ class Imagewindow(Gtk.Window):
         self.showtoolbar = True
         self.slideshow_type = 'NextSlides'
         self.slide_delay = 5
+        self.auto_orientation = True
 
         popup = uimanager.get_widget('/PopupMenu')
         self.set_events(Gdk.EventMask.BUTTON_PRESS_MASK|Gdk.EventMask.STRUCTURE_MASK)
@@ -211,11 +212,12 @@ class Imagewindow(Gtk.Window):
         self.scrolledwindow.add_with_viewport(self.image)
 
     def set_preferences(self, button):
-        dialog = prefs.PrefsDialog(self)
+        dialog = prefs.PrefsDialog(self, self.auto_orientation)
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
-            self.slide_delay = dialog.choose_delay.get_value_as_int()
+            self.auto_orientation = dialog.orient_button.get_active()
             self.image.override_background_color(Gtk.StateType.NORMAL, dialog.color_button.get_rgba())
+            self.slide_delay = dialog.choose_delay.get_value_as_int()
         dialog.destroy()
 
     def toggle_slides(self, button):
@@ -289,13 +291,15 @@ class Imagewindow(Gtk.Window):
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.win_width, self.win_height)
         self.img_width = self.pixbuf.get_width()
         self.img_height = self.pixbuf.get_height()
-        self.apply_orientation()
+        if self.auto_orientation:
+            self.apply_orientation()
 
     def load_image_1to1(self):
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
         self.img_width = self.pixbuf.get_width()
         self.img_height = self.pixbuf.get_height()
-        self.apply_orientation()
+        if self.auto_orientation:
+            self.apply_orientation()
 
     def apply_orientation(self):
         orient = self.pixbuf.get_option('orientation')
