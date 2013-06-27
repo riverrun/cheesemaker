@@ -215,7 +215,7 @@ class Imagewindow(Gtk.Window):
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
             self.slide_delay = dialog.choose_delay.get_value_as_int()
-            self.image.override_background_color(Gtk.StateType.NORMAL, dialog.bg_color)
+            self.image.override_background_color(Gtk.StateType.NORMAL, dialog.color_button.get_rgba())
         dialog.destroy()
 
     def toggle_slides(self, button):
@@ -228,7 +228,7 @@ class Imagewindow(Gtk.Window):
 
     def start_slideshow(self):
         if self.slideshow_type:
-            self.goto_next_image()
+            self.go_next_image(None)
         else:
             self.filename = random.choice(self.filelist)
             self.load_image()
@@ -318,7 +318,7 @@ class Imagewindow(Gtk.Window):
         self.pixbuf = self.pixbuf.scale_simple(self.img_width, self.img_height, GdkPixbuf.InterpType.BILINEAR)
         self.image.set_from_pixbuf(self.pixbuf)
 
-    def goto_next_image(self):
+    def go_next_image(self, button):
         if self.image_index < len(self.filelist)-1:
             self.image_index += 1
         else:
@@ -327,9 +327,6 @@ class Imagewindow(Gtk.Window):
         self.load_image()
         self.image.set_from_pixbuf(self.pixbuf)
         self.new_image_reset()
-
-    def go_next_image(self, button):
-        self.goto_next_image()
 
     def go_prev_image(self, button):
         if self.image_index > 0:

@@ -2,10 +2,14 @@
 <span font="serif 11">Cheesemaker is a simple image viewer.</span>
 
 <span font="sans bold 12">Features</span>
-<span font="serif 11">Cheesemaker supports showing images, zoom, rotating and flipping images, and saving images. There is also a slideshow with two options - to view the images at random or in order.</span>
+<span font="serif 11">Cheesemaker supports zoom, rotating and flipping images, saving images, fullscreen view and a slideshow.</span>
 
-<span font="sans bold 11">Slideshow options</span>
-<span font="serif 11">The images can be viewed at random or in order. This can even be changed while the slideshow is running.</span>
+<span font="sans bold 11">Slideshow and fullscreen</span>
+<span font="serif 11">While the image is being displayed fullscreen, the cursor will be hidden, but you can open the popup menu by right-clicking on the window.
+With the slideshow, the images can be viewed at random or in order. This option can even be changed while the slideshow is running. There is also an option, in the preferences section, to change the time delay between images.</span>
+
+<span font="sans bold 11">Preferences</span>
+<span font="serif 11">In addition to the option to change the time delay for the slideshow, you can also change the background color.</span>
 
 <span font="sans bold 12">Saving an image</span>
 <span font="serif 11">There is an option to save images, but there might be a decrease in quality.</span>
@@ -25,6 +29,7 @@
     <span font="serif bold 11">Ctrl + S</span>    <span font="serif 11">Save the crossword</span>
     <span font="serif bold 11">Ctrl + Q</span>    <span font="serif 11">Quit the program</span>
     <span font="serif bold 11">F1</span>    <span font="serif 11">Open the help page</span>
+    <span font="serif bold 11">Ctrl + P</span>    <span font="serif 11">Edit the preferences</span>
 <span font="sans bold 11">Zoom options</span>
     <span font="serif bold 11">Ctrl + Up</span>    <span font="serif 11">Zoom in</span>
     <span font="serif bold 11">Ctrl + Down</span>    <span font="serif 11">Zoom out</span>
