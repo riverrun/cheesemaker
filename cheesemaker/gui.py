@@ -212,10 +212,10 @@ class Imagewindow(Gtk.Window):
         self.scrolledwindow.add_with_viewport(self.image)
 
     def set_preferences(self, button):
-        dialog = prefs.PrefsDialog(self, self.auto_orientation)
+        dialog = prefs.PrefsDialog(self)
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
-            self.auto_orientation = dialog.orient_button.get_active()
+            self.auto_orientation = dialog.auto_orientation
             self.image.override_background_color(Gtk.StateType.NORMAL, dialog.color_button.get_rgba())
             self.slide_delay = dialog.choose_delay.get_value_as_int()
         dialog.destroy()
@@ -326,10 +326,9 @@ class Imagewindow(Gtk.Window):
         self.image_zoom(0.8)
 
     def image_zoom(self, zoomratio):
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
-        self.pixbuf = self.rotated_flipped(pixbuf)
         self.img_width, self.img_height = self.img_width*zoomratio, self.img_height*zoomratio
-        self.pixbuf = self.pixbuf.scale_simple(self.img_width, self.img_height, GdkPixbuf.InterpType.BILINEAR)
+        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.img_width, self.img_height)
+        self.pixbuf = self.rotated_flipped(pixbuf)
         self.image.set_from_pixbuf(self.pixbuf)
 
     def go_next_image(self, button):
