@@ -291,15 +291,11 @@ class Imagewindow(Gtk.Window):
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.win_width, self.win_height)
         self.img_width = self.pixbuf.get_width()
         self.img_height = self.pixbuf.get_height()
-        if self.auto_orientation:
-            self.apply_orientation()
 
     def load_image_1to1(self):
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
         self.img_width = self.pixbuf.get_width()
         self.img_height = self.pixbuf.get_height()
-        if self.auto_orientation:
-            self.apply_orientation()
 
     def apply_orientation(self):
         orient = self.pixbuf.get_option('orientation')
@@ -339,6 +335,8 @@ class Imagewindow(Gtk.Window):
         self.new_image_reset()
         self.filename = self.filelist[self.image_index]
         self.load_image()
+        if self.auto_orientation:
+            self.apply_orientation()
         self.image.set_from_pixbuf(self.pixbuf)
 
     def go_prev_image(self, button):
@@ -349,6 +347,8 @@ class Imagewindow(Gtk.Window):
         self.new_image_reset()
         self.filename = self.filelist[self.image_index]
         self.load_image()
+        if self.auto_orientation:
+            self.apply_orientation()
         self.image.set_from_pixbuf(self.pixbuf)
 
     def image_rotate_left(self, button):
@@ -426,6 +426,8 @@ class Imagewindow(Gtk.Window):
         dialog.destroy()
         self.new_image_reset()
         self.load_image()
+        if self.auto_orientation:
+            self.apply_orientation()
         self.image.set_from_pixbuf(self.pixbuf)
         os.chdir(os.path.dirname(self.filename))
         filelist = os.listdir()
@@ -452,6 +454,8 @@ class Imagewindow(Gtk.Window):
         self.new_image_reset()
         self.filename = self.filelist[0]
         self.load_image()
+        if self.auto_orientation:
+            self.apply_orientation()
         self.image.set_from_pixbuf(self.pixbuf)
 
     def save_image(self, button):
