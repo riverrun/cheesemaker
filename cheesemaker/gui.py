@@ -47,8 +47,7 @@ ui_info = """
       <menuitem action='Nextimg'/>
       <menuitem action='Previmg'/>
       <separator/>
-      <menuitem action='ShowMenuBar'/>
-      <menuitem action='ShowToolBar'/>
+      <menuitem action='Reloadimg'/>
       <separator/>
       <menuitem action='Full'/>
       <menuitem action='Slides'/>
@@ -96,9 +95,6 @@ ui_info = """
       <menuitem action='RandomSlides'/>
     </menu>
     <separator/>
-    <menuitem action='ShowMenuBar'/>
-    <menuitem action='ShowToolBar'/>
-    <separator/>
     <menuitem action='Rotateleft'/>
     <menuitem action='Rotateright'/>
     <separator/>
@@ -136,8 +132,6 @@ class Imagewindow(Gtk.Window):
         self.grid.attach(self.toolbar, 0, 1, 1, 1)
         self.imageview()
 
-        self.showmenubar = True
-        self.showtoolbar = True
         self.slideshow_type = 'NextSlides'
         self.slide_delay = 5
         self.auto_orientation = True
@@ -168,6 +162,7 @@ class Imagewindow(Gtk.Window):
             ('ViewMenu', None, '_View'),
             ('Nextimg', Gtk.STOCK_GO_FORWARD, '_Next image', '<Alt>Right', 'Next image', self.go_next_image),
             ('Previmg', Gtk.STOCK_GO_BACK, '_Previous image', '<Alt>Left', 'Previous image', self.go_prev_image),
+            ('Reloadimg', Gtk.STOCK_REDO, '_Reload image', '<Ctrl>R', 'Reload image', self.reload_image),
             ('SlidesOpts', None, 'S_lideshow options'),
             ('ZoomMenu', None, '_Zoom'),
             ('Zoomin', Gtk.STOCK_ZOOM_IN, 'Zoom in', '<Ctrl>Up', 'Zoom in', self.image_zoom_in),
@@ -181,9 +176,7 @@ class Imagewindow(Gtk.Window):
         action_group.add_toggle_actions([
             ('Desaturate', None, 'Toggle _grayscale', None, 'Toggle grayscale', self.toggle_gray),
             ('Full', Gtk.STOCK_FULLSCREEN, '_Fullscreen', 'F11', 'Fullscreen', self.toggle_full),
-            ('Slides', None, '_Slideshow', 'F5', 'Slideshow', self.toggle_slides),
-            ('ShowMenuBar', None, 'Show _menubar', None, 'Show menubar', self.toggle_menu, True),
-            ('ShowToolBar', None, 'Show _toolbar', None, 'Show toolbar', self.toggle_tool, True)
+            ('Slides', None, '_Slideshow', 'F5', 'Slideshow', self.toggle_slides)
             ])
 
         action_group.add_radio_actions([
@@ -247,36 +240,18 @@ class Imagewindow(Gtk.Window):
             self.set_unfullscreen()
 
     def set_fullscreen(self):
-        self.fullscreen()
         self.menubar.hide()
         self.toolbar.hide()
+        self.fullscreen()
         cursor = Gdk.Cursor.new(Gdk.CursorType.BLANK_CURSOR)
         self.get_window().set_cursor(cursor)
 
     def set_unfullscreen(self):
+        self.menubar.show()
+        self.toolbar.show()
         self.unfullscreen()
-        if self.showmenubar:
-            self.menubar.show()
-        if self.showtoolbar:
-            self.toolbar.show()
         cursor = Gdk.Cursor.new(Gdk.CursorType.ARROW)
         self.get_window().set_cursor(cursor)
-
-    def toggle_menu(self, button):
-        if button.get_active():
-            self.menubar.show()
-            self.showmenubar = True
-        else:
-            self.menubar.hide()
-            self.showmenubar = False
-
-    def toggle_tool(self, button):
-        if button.get_active():
-            self.toolbar.show()
-            self.showtoolbar = True
-        else:
-            self.toolbar.hide()
-            self.showtoolbar = False
 
     def toggle_gray(self, button):
         if button.get_active():
@@ -296,6 +271,13 @@ class Imagewindow(Gtk.Window):
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
         self.img_width = self.pixbuf.get_width()
         self.img_height = self.pixbuf.get_height()
+
+    def reload_image(self, button):
+        self.new_image_reset()
+        self.load_image()
+        if self.auto_orientation:
+            self.apply_orientation()
+        self.image.set_from_pixbuf(self.pixbuf)
 
     def apply_orientation(self):
         orient = self.pixbuf.get_option('orientation')
@@ -332,24 +314,16 @@ class Imagewindow(Gtk.Window):
             self.image_index += 1
         else:
             self.image_index = 0
-        self.new_image_reset()
         self.filename = self.filelist[self.image_index]
-        self.load_image()
-        if self.auto_orientation:
-            self.apply_orientation()
-        self.image.set_from_pixbuf(self.pixbuf)
+        self.reload_image(None)
 
     def go_prev_image(self, button):
         if self.image_index > 0:
             self.image_index -= 1
         else:
             self.image_index = len(self.filelist)-1
-        self.new_image_reset()
         self.filename = self.filelist[self.image_index]
-        self.load_image()
-        if self.auto_orientation:
-            self.apply_orientation()
-        self.image.set_from_pixbuf(self.pixbuf)
+        self.reload_image(None)
 
     def image_rotate_left(self, button):
         if self.rotate_state > 0:
@@ -424,11 +398,7 @@ class Imagewindow(Gtk.Window):
             dialog.destroy()
             return 0
         dialog.destroy()
-        self.new_image_reset()
-        self.load_image()
-        if self.auto_orientation:
-            self.apply_orientation()
-        self.image.set_from_pixbuf(self.pixbuf)
+        self.reload_image(None)
         os.chdir(os.path.dirname(self.filename))
         filelist = os.listdir()
         self.filelist = [name for name in filelist if name.split('.')[-1].lower() in self.format_list]
@@ -451,12 +421,8 @@ class Imagewindow(Gtk.Window):
         self.filelist = [name for name in filelist if name.split('.')[-1].lower() in self.format_list]
         self.filelist.sort()
         self.image_index = 0
-        self.new_image_reset()
         self.filename = self.filelist[0]
-        self.load_image()
-        if self.auto_orientation:
-            self.apply_orientation()
-        self.image.set_from_pixbuf(self.pixbuf)
+        self.reload_image(None)
 
     def save_image(self, button):
         filetype = GdkPixbuf.Pixbuf.get_file_info(self.filename)[0].get_name()
@@ -512,7 +478,7 @@ class Imagewindow(Gtk.Window):
         'along with Cheesemaker. If not, see http://www.gnu.org/licenses/gpl.html')
         about = Gtk.AboutDialog()
         about.set_program_name('Cheesemaker')
-        about.set_version('0.1.5')
+        about.set_version('0.1.6')
         about.set_license(license)
         about.set_wrap_license(True)
         about.set_comments('A simple image viewer.')
