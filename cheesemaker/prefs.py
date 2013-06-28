@@ -27,6 +27,14 @@ class Config(object):
         if not os.path.isdir(self.config_dir):
             os.mkdir(self.config_dir)
         self.config_file = os.path.join(self.config_dir, 'cheesemaker')
+
+        config = configparser.ConfigParser()
+
+        config.read(self.config_file)
+        common = config['Common']
+        common.getboolean('AutoOrientation')
+        common['BackgroundColor']
+        int(common['SlideTimeDelay'])
         
 class PrefsDialog(Gtk.Dialog):
     def __init__(self, parent):
