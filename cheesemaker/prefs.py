@@ -26,16 +26,24 @@ class Config(object):
         self.config_dir = os.path.join(BaseDirectory.xdg_config_home, 'cheesemaker')
         if not os.path.isdir(self.config_dir):
             os.mkdir(self.config_dir)
-        self.config_file = os.path.join(self.config_dir, 'cheesemaker')
+        self.config_file = os.path.join(self.config_dir, 'cheesemaker.ini')
 
-        config = configparser.ConfigParser()
+        self.config = configparser.ConfigParser()
 
-        config.read(self.config_file)
-        common = config['Common']
-        common.getboolean('AutoOrientation')
-        common['BackgroundColor']
-        int(common['SlideTimeDelay'])
-        
+    def read_config(self):
+        try:
+            self.config.read(self.config_file)
+            com = self.config['Common']
+            orientation = com.getboolean('AutoOrientation')
+            bg_color = com['BackgroundColor']
+            slide_delay = int(com['SlideTimeDelay'])
+            return (orientation, bg_color, slide_delay)
+        except:
+            return (True, Gdk.RGBA(0.0, 0.0, 0.0, 1.0), 5)
+
+    def write_config(self):
+        pass
+
 class PrefsDialog(Gtk.Dialog):
     def __init__(self, parent):
         Gtk.Dialog.__init__(self, 'Preferences', parent, 0,
@@ -48,6 +56,7 @@ class PrefsDialog(Gtk.Dialog):
 
         self.auto_orientation = parent.auto_orientation
         self.bg_color = Gdk.RGBA(0.0, 0.0, 0.0, 1.0)
+        self.slide_delay = parent.slide_delay
 
         orient_title = Gtk.Label()
         box.pack_start(orient_title, True, True, 0)
@@ -92,7 +101,7 @@ class PrefsDialog(Gtk.Dialog):
         slide_delay_label.set_halign(Gtk.Align.START)
         slide_delay_box.pack_start(slide_delay_label, True, True, 0)
 
-        adjustment = Gtk.Adjustment(5, 1, 50, 1, 10, 0)
+        adjustment = Gtk.Adjustment(self.slide_delay, 1, 50, 1, 10, 0)
         self.choose_delay = Gtk.SpinButton()
         self.choose_delay.set_adjustment(adjustment)
         self.choose_delay.set_update_policy(Gtk.SpinButtonUpdatePolicy.IF_VALID)

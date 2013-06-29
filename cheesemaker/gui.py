@@ -113,7 +113,6 @@ class Imagewindow(Gtk.Window):
         self.set_default_size(700, 500)
         self.set_default_icon_name('cheesemaker')
         self.image = Gtk.Image()
-        self.image.override_background_color(Gtk.StateType.NORMAL, Gdk.RGBA(0.0, 0.0, 0.0, 1.0))
         self.image_size = 'Zoomfit'
         self.load_image = self.load_image_fit
         self.win_width = 0
@@ -132,9 +131,12 @@ class Imagewindow(Gtk.Window):
         self.grid.attach(self.toolbar, 0, 1, 1, 1)
         self.imageview()
 
+        conf = prefs.Config()
+        values = conf.read_config()
+        self.auto_orientation = values[0]
+        self.image.override_background_color(Gtk.StateType.NORMAL, Gdk.RGBA(0.0, 0.0, 0.0, 1.0))
+        self.slide_delay = values[2]
         self.slideshow_type = 'NextSlides'
-        self.slide_delay = 5
-        self.auto_orientation = True
 
         popup = uimanager.get_widget('/PopupMenu')
         self.set_events(Gdk.EventMask.BUTTON_PRESS_MASK|Gdk.EventMask.STRUCTURE_MASK)
@@ -197,12 +199,12 @@ class Imagewindow(Gtk.Window):
         return uimanager
 
     def imageview(self):
-        self.scrolledwindow = Gtk.ScrolledWindow()
-        self.scrolledwindow.set_hexpand(True)
-        self.scrolledwindow.set_vexpand(True)
-        self.scrolledwindow.connect('size-allocate', self.on_resize)
-        self.grid.attach(self.scrolledwindow, 0, 2, 1, 1)
-        self.scrolledwindow.add_with_viewport(self.image)
+        scrolledwindow = Gtk.ScrolledWindow()
+        scrolledwindow.set_hexpand(True)
+        scrolledwindow.set_vexpand(True)
+        scrolledwindow.connect('size-allocate', self.on_resize)
+        self.grid.attach(scrolledwindow, 0, 2, 1, 1)
+        scrolledwindow.add_with_viewport(self.image)
 
     def set_preferences(self, button):
         dialog = prefs.PrefsDialog(self)
