@@ -213,6 +213,8 @@ class Imagewindow(Gtk.Window):
             self.auto_orientation = dialog.auto_orientation
             self.image.override_background_color(Gtk.StateType.NORMAL, dialog.color_button.get_rgba())
             self.slide_delay = dialog.choose_delay.get_value_as_int()
+            conf = prefs.Config()
+            conf.write_config(self.auto_orientation, dialog.color_button.get_rgba(), self.slide_delay)
         dialog.destroy()
 
     def toggle_slides(self, button):

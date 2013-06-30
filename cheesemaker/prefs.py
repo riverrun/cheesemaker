@@ -19,11 +19,12 @@
 
 import os, configparser
 from gi.repository import Gtk, Gdk
-from xdg import BaseDirectory
+#from xdg import BaseDirectory
 
 class Config(object):
     def __init__(self):
-        self.config_dir = os.path.join(BaseDirectory.xdg_config_home, 'cheesemaker')
+        #self.config_dir = os.path.join(BaseDirectory.xdg_config_home, 'cheesemaker')
+        self.config_dir = os.path.join(os.path.expanduser('~/.config'), 'cheesemaker')
         if not os.path.isdir(self.config_dir):
             os.mkdir(self.config_dir)
         self.config_file = os.path.join(self.config_dir, 'cheesemaker.ini')
@@ -41,8 +42,14 @@ class Config(object):
         except:
             return (True, Gdk.RGBA(0.0, 0.0, 0.0, 1.0), 5)
 
-    def write_config(self):
-        pass
+    def write_config(self, orientation, bg_color, slide_delay):
+        self.config['Common'] = {}
+        com = self.config['Common']
+        com['AutoOrientation'] = str(orientation)
+        com['BackgroundColor'] = Gdk.RGBA.to_string(bg_color)
+        com['SlideTimeDelay'] = str(slide_delay)
+        with open(self.config_file, 'w') as configfile:
+            self.config.write(configfile)
 
 class PrefsDialog(Gtk.Dialog):
     def __init__(self, parent):
