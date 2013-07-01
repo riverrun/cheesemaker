@@ -8,12 +8,16 @@ There is now a slideshow, which can show random images or show the images in ord
 
 The save function is very basic - the quality of the saved image is not as good as it should be.
 
+The preferences (automatic orientation, background color, and slideshow time delay) are saved in a configuration file.
+
 ### TODO
 
-* Add configuration file.
+* Improve automatic orientation.
+* Make it faster.
 * Put my feet up and relax.
-* Provide more options when saving.
+* Improve saving.
 * Take it easy for a while.
+* Make it faster.
 * Add a crop function.
 
 ### Author
