@@ -131,11 +131,7 @@ class Imagewindow(Gtk.Window):
         self.grid.attach(self.toolbar, 0, 1, 1, 1)
         self.imageview()
 
-        conf = prefs.Config()
-        values = conf.read_config()
-        self.auto_orientation = values[0]
-        self.image.override_background_color(Gtk.StateType.NORMAL, Gdk.RGBA(0.0, 0.0, 0.0, 1.0))
-        self.slide_delay = values[2]
+        self.read_preferences()
         self.slideshow_type = 'NextSlides'
 
         popup = uimanager.get_widget('/PopupMenu')
@@ -205,6 +201,19 @@ class Imagewindow(Gtk.Window):
         scrolledwindow.connect('size-allocate', self.on_resize)
         self.grid.attach(scrolledwindow, 0, 2, 1, 1)
         scrolledwindow.add_with_viewport(self.image)
+
+    def read_preferences(self):
+        try:
+            conf = prefs.Config()
+            values = conf.read_config()
+            self.auto_orientation = values[0]
+            self.image.override_background_color(Gtk.StateType.NORMAL, 
+                    Gdk.RGBA(values[1][0], values[1][1], values[1][2], values[1][3]))
+            self.slide_delay = values[2]
+        except:
+            self.auto_orientation = True
+            self.image.override_background_color(Gtk.StateType.NORMAL, Gdk.RGBA(0.0, 0.0, 0.0, 1.0))
+            self.slide_delay = 5
 
     def set_preferences(self, button):
         dialog = prefs.PrefsDialog(self)

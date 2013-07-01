@@ -32,21 +32,19 @@ class Config(object):
         self.config = configparser.ConfigParser()
 
     def read_config(self):
-        try:
-            self.config.read(self.config_file)
-            com = self.config['Common']
-            orientation = com.getboolean('AutoOrientation')
-            bg_color = com['BackgroundColor']
-            slide_delay = int(com['SlideTimeDelay'])
-            return (orientation, bg_color, slide_delay)
-        except:
-            return (True, Gdk.RGBA(0.0, 0.0, 0.0, 1.0), 5)
+        self.config.read(self.config_file)
+        com = self.config['Common']
+        orientation = com.getboolean('AutoOrientation')
+        bg_color = com['BackgroundColor'].strip('<Gdk.Color>()')
+        bg_color = [float(num[-8:]) for num in bg_color.split(',')]
+        slide_delay = int(com['SlideTimeDelay'])
+        return (orientation, bg_color, slide_delay)
 
     def write_config(self, orientation, bg_color, slide_delay):
         self.config['Common'] = {}
         com = self.config['Common']
         com['AutoOrientation'] = str(orientation)
-        com['BackgroundColor'] = Gdk.RGBA.to_string(bg_color)
+        com['BackgroundColor'] = str(bg_color)
         com['SlideTimeDelay'] = str(slide_delay)
         with open(self.config_file, 'w') as configfile:
             self.config.write(configfile)
