@@ -8,7 +8,7 @@ There is now a slideshow, which can show random images or show the images in ord
 
 The save function is very basic - the quality of the saved image is not as good as it should be.
 
-The preferences (automatic orientation, background color, and slideshow time delay) are saved in a configuration file.
+The preferences (automatic orientation, background color, and slideshow time delay) are saved for the next time you use Cheesemaker.
 
 ### TODO
 
@@ -19,6 +19,10 @@ The preferences (automatic orientation, background color, and slideshow time del
 * Take it easy for a while.
 * Make it faster.
 * Add a crop function.
+
+### Dependencies
+
+Cheesemaker depends on python3, python3-gi and gir1.2-gdkpixbuf-2.0.
 
 ### Author
 
