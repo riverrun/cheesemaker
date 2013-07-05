@@ -19,19 +19,16 @@
 
 from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
 import os, random
-from . import prefs
+from . import preferences
 
 ui_info = """
 <ui>
-  <menubar name='MenuBar'>
-    <menu action='FileMenu'>
-      <menuitem action='Open'/>
-      <menuitem action='Opendir'/>
-      <separator/>
-      <menuitem action='Saveas'/>
-      <separator/>
-      <menuitem action='Quit'/>
-    </menu>
+  <popup name='PopupMenu'>
+    <menuitem action='Open'/>
+    <menuitem action='Opendir'/>
+    <separator/>
+    <menuitem action='Saveas'/>
+    <separator/>
     <menu action='EditMenu'>
       <menuitem action='Rotateleft'/>
       <menuitem action='Rotateright'/>
@@ -49,13 +46,6 @@ ui_info = """
       <separator/>
       <menuitem action='Reloadimg'/>
       <separator/>
-      <menuitem action='Full'/>
-      <menuitem action='Slides'/>
-      <menu action='SlidesOpts'>
-        <menuitem action='NextSlides'/>
-        <menuitem action='RandomSlides'/>
-      </menu>
-      <separator/>
       <menu action='ZoomMenu'>
         <menuitem action='Zoomin'/>
         <menuitem action='Zoomout'/>
@@ -63,31 +53,6 @@ ui_info = """
         <menuitem action='Zoomfit'/>
       </menu>
     </menu>
-    <menu action='HelpMenu'>
-      <menuitem action='Help'/>
-      <menuitem action='About'/>
-    </menu>
-  </menubar>
-  <toolbar name='ToolBar'>
-    <toolitem action='Open'/>
-    <separator action='Sep1'/>
-    <toolitem action='Previmg'/>
-    <toolitem action='Nextimg'/>
-    <separator action='Sep2'/>
-    <toolitem action='Zoomin'/>
-    <toolitem action='Zoomout'/>
-    <toolitem action='Zoom1to1'/>
-    <toolitem action='Zoomfit'/>
-    <separator action='Sep3'/>
-    <toolitem action='Help'/>
-  </toolbar>
-  <popup name='PopupMenu'>
-    <menuitem action='Open'/>
-    <menuitem action='Opendir'/>
-    <separator/>
-    <menuitem action='Nextimg'/>
-    <menuitem action='Previmg'/>
-    <separator/>
     <menuitem action='Full'/>
     <menuitem action='Slides'/>
     <menu action='SlidesOpts'>
@@ -95,13 +60,12 @@ ui_info = """
       <menuitem action='RandomSlides'/>
     </menu>
     <separator/>
-    <menuitem action='Rotateleft'/>
-    <menuitem action='Rotateright'/>
+    <menu action='HelpMenu'>
+      <menuitem action='Help'/>
+      <menuitem action='About'/>
+    </menu>
     <separator/>
-    <menuitem action='Fliphoriz'/>
-    <menuitem action='Flipvert'/>
-    <separator/>
-    <menuitem action='Desaturate'/>
+    <menuitem action='Quit'/>
   </popup>
 </ui>
 """
@@ -125,10 +89,6 @@ class Imagewindow(Gtk.Window):
         self.actions(action_group)
         uimanager = self.create_ui_manager()
         uimanager.insert_action_group(action_group)
-        self.menubar = uimanager.get_widget('/MenuBar')
-        self.grid.attach(self.menubar, 0, 0, 1, 1)
-        self.toolbar = uimanager.get_widget('/ToolBar')
-        self.grid.attach(self.toolbar, 0, 1, 1, 1)
         self.imageview()
 
         self.read_preferences()
@@ -138,7 +98,7 @@ class Imagewindow(Gtk.Window):
         self.set_events(Gdk.EventMask.BUTTON_PRESS_MASK|Gdk.EventMask.STRUCTURE_MASK)
         self.connect('button-press-event', self.on_button_press, popup)
 
-        graylist = ['/MenuBar/EditMenu/Desaturate', '/PopupMenu/Desaturate']
+        graylist = ['/PopupMenu/EditMenu/Desaturate']
         self.graylist = [uimanager.get_widget(name) for name in graylist]
         self.new_image_reset()
 
@@ -147,7 +107,6 @@ class Imagewindow(Gtk.Window):
 
     def actions(self, action_group):
         action_group.add_actions([
-            ('FileMenu', None, '_File'),
             ('Open', Gtk.STOCK_OPEN, '_Open image', None, 'Open image', self.open_image),
             ('Opendir', None, 'Open fol_der', '<Ctrl>D', 'Open folder', self.open_dir),
             ('Saveas', Gtk.STOCK_SAVE, '_Save image', None, 'Save image', self.save_image),
@@ -199,12 +158,12 @@ class Imagewindow(Gtk.Window):
         scrolledwindow.set_hexpand(True)
         scrolledwindow.set_vexpand(True)
         scrolledwindow.connect('size-allocate', self.on_resize)
-        self.grid.attach(scrolledwindow, 0, 2, 1, 1)
+        self.grid.attach(scrolledwindow, 0, 0, 1, 1)
         scrolledwindow.add_with_viewport(self.image)
 
     def read_preferences(self):
         try:
-            conf = prefs.Config()
+            conf = preferences.Config()
             values = conf.read_config()
             self.auto_orientation = values[0]
             self.image.override_background_color(Gtk.StateType.NORMAL, 
@@ -216,13 +175,13 @@ class Imagewindow(Gtk.Window):
             self.slide_delay = 5
 
     def set_preferences(self, button):
-        dialog = prefs.PrefsDialog(self)
+        dialog = preferences.PrefsDialog(self)
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
             self.auto_orientation = dialog.auto_orientation
             self.image.override_background_color(Gtk.StateType.NORMAL, dialog.color_button.get_rgba())
             self.slide_delay = dialog.choose_delay.get_value_as_int()
-            conf = prefs.Config()
+            conf = preferences.Config()
             conf.write_config(self.auto_orientation, dialog.color_button.get_rgba(), self.slide_delay)
         dialog.destroy()
 
@@ -252,15 +211,11 @@ class Imagewindow(Gtk.Window):
             self.set_unfullscreen()
 
     def set_fullscreen(self):
-        self.menubar.hide()
-        self.toolbar.hide()
         self.fullscreen()
         cursor = Gdk.Cursor.new(Gdk.CursorType.BLANK_CURSOR)
         self.get_window().set_cursor(cursor)
 
     def set_unfullscreen(self):
-        self.menubar.show()
-        self.toolbar.show()
         self.unfullscreen()
         cursor = Gdk.Cursor.new(Gdk.CursorType.ARROW)
         self.get_window().set_cursor(cursor)
@@ -471,7 +426,7 @@ class Imagewindow(Gtk.Window):
             pass
 
     def help_page(self, button):
-        dialog = prefs.HelpDialog(self)
+        dialog = preferences.HelpDialog(self)
         dialog.run()
         dialog.destroy()
 
@@ -488,7 +443,7 @@ class Imagewindow(Gtk.Window):
         'along with Cheesemaker. If not, see http://www.gnu.org/licenses/gpl.html')
         about = Gtk.AboutDialog()
         about.set_program_name('Cheesemaker')
-        about.set_version('0.1.6')
+        about.set_version('0.2.0')
         about.set_license(license)
         about.set_wrap_license(True)
         about.set_comments('A simple image viewer.')
