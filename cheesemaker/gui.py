@@ -41,8 +41,8 @@ ui_info = """
       <menuitem action='Prefs'/>
     </menu>
     <menu action='ViewMenu'>
-      <menuitem action='Nextimg'/>
       <menuitem action='Previmg'/>
+      <menuitem action='Nextimg'/>
       <separator/>
       <menuitem action='Reloadimg'/>
       <separator/>
@@ -101,6 +101,8 @@ class Imagewindow(Gtk.Window):
         graylist = ['/PopupMenu/EditMenu/Desaturate']
         self.graylist = [uimanager.get_widget(name) for name in graylist]
         self.new_image_reset()
+        self.list_clickable_buttons(uimanager)
+        self.set_sensitivities(False)
 
         self.format_list = ['ras', 'tif', 'tiff', 'wmf', 'icns', 'ico', 'png', 'wbmp', 
                 'gif', 'pnm', 'tga', 'ani', 'xbm', 'xpm', 'jpg', 'pcx', 'jpeg', 'bmp', 'svg']
@@ -160,6 +162,19 @@ class Imagewindow(Gtk.Window):
         scrolledwindow.connect('size-allocate', self.on_resize)
         self.grid.attach(scrolledwindow, 0, 0, 1, 1)
         scrolledwindow.add_with_viewport(self.image)
+
+    def list_clickable_buttons(self, uimanager):
+        click_list = ['/PopupMenu/Saveas', '/PopupMenu/EditMenu/Rotateleft', '/PopupMenu/EditMenu/Rotateright', 
+                '/PopupMenu/EditMenu/Fliphoriz', '/PopupMenu/EditMenu/Flipvert', '/PopupMenu/EditMenu/Desaturate', 
+                '/PopupMenu/ViewMenu/Previmg', '/PopupMenu/ViewMenu/Nextimg', '/PopupMenu/ViewMenu/Reloadimg', 
+                '/PopupMenu/ViewMenu/ZoomMenu/Zoomin', '/PopupMenu/ViewMenu/ZoomMenu/Zoomout', 
+                '/PopupMenu/ViewMenu/ZoomMenu/Zoom1to1', '/PopupMenu/ViewMenu/ZoomMenu/Zoomfit', 
+                '/PopupMenu/Full', '/PopupMenu/Slides']
+        self.click_buttons = [uimanager.get_widget(name) for name in click_list]
+
+    def set_sensitivities(self, value):
+        for button in self.click_buttons:
+            button.set_sensitive(value)
 
     def read_preferences(self):
         try:
@@ -363,6 +378,7 @@ class Imagewindow(Gtk.Window):
             return
         dialog.destroy()
         self.reload_image(None)
+        self.set_sensitivities(True)
         os.chdir(os.path.dirname(self.filename))
         filelist = os.listdir()
         self.filelist = [name for name in filelist if name.split('.')[-1].lower() in self.format_list]
@@ -387,6 +403,7 @@ class Imagewindow(Gtk.Window):
         self.image_index = 0
         self.filename = self.filelist[0]
         self.reload_image(None)
+        self.set_sensitivities(True)
 
     def save_image(self, button):
         file_info = GdkPixbuf.Pixbuf.get_file_info(self.filename)
