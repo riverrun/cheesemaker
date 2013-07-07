@@ -70,10 +70,11 @@ ui_info = """
 </ui>
 """
 
-class Imagewindow(Gtk.Window):
-    def __init__(self):
-        Gtk.Window.__init__(self, title='Cheesemaker')
+class Imagewindow(Gtk.ApplicationWindow):
+    def __init__(self, app):
+        Gtk.Window.__init__(self, title='Cheesemaker', application=app)
 
+        self.app = app
         self.set_default_size(700, 500)
         self.set_default_icon_name('cheesemaker')
         self.image = Gtk.Image()
@@ -103,6 +104,8 @@ class Imagewindow(Gtk.Window):
         self.new_image_reset()
         self.list_clickable_buttons(uimanager)
         self.set_sensitivities(False)
+        self.set_position(Gtk.WindowPosition.CENTER)
+        self.show_all
 
         self.format_list = ['ras', 'tif', 'tiff', 'wmf', 'icns', 'ico', 'png', 'wbmp', 
                 'gif', 'pnm', 'tga', 'ani', 'xbm', 'xpm', 'jpg', 'pcx', 'jpeg', 'bmp', 'svg']
@@ -203,8 +206,10 @@ class Imagewindow(Gtk.Window):
     def toggle_slides(self, button):
         if button.get_active():
             self.set_fullscreen()
+            self.slide_cookie = self.app.inhibit(self, Gtk.ApplicationInhibitFlags.IDLE, 'Disable slideshow')
             self.timer_delay = GLib.timeout_add_seconds(self.slide_delay, self.start_slideshow)
         else:
+            self.app.uninhibit(self.slide_cookie)
             GLib.source_remove(self.timer_delay)
             self.set_unfullscreen()
 
@@ -242,12 +247,12 @@ class Imagewindow(Gtk.Window):
         else:
             self.grays = False
             self.load_image()
+            self.pixbuf = self.modified_state()
         self.image.set_from_pixbuf(self.pixbuf)
 
     def load_image_fit(self):
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.win_width, self.win_height)
-        self.img_width = self.pixbuf.get_width()
-        self.img_height = self.pixbuf.get_height()
+        self.img_width, self.img_height = self.win_width, self.win_height
 
     def load_image_1to1(self):
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
@@ -299,7 +304,6 @@ class Imagewindow(Gtk.Window):
 
     def image_zoom(self, zoomratio):
         self.img_width, self.img_height = self.img_width*zoomratio, self.img_height*zoomratio
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.img_width, self.img_height)
         self.pixbuf = self.modified_state()
         self.image.set_from_pixbuf(self.pixbuf)
 
@@ -472,7 +476,7 @@ class Imagewindow(Gtk.Window):
         'along with Cheesemaker. If not, see http://www.gnu.org/licenses/gpl.html')
         about = Gtk.AboutDialog()
         about.set_program_name('Cheesemaker')
-        about.set_version('0.2.0')
+        about.set_version('0.2.1')
         about.set_license(license)
         about.set_wrap_license(True)
         about.set_comments('A simple image viewer.')
@@ -482,10 +486,19 @@ class Imagewindow(Gtk.Window):
         about.destroy()
 
     def quit_app(self, widget):
-        Gtk.main_quit()
+        self.app.quit()
+
+class Imageapplication(Gtk.Application):
+    def __init__(self):
+        Gtk.Application.__init__(self, application_id='org.riverrun.Cheesemaker')
+
+    def do_activate(self):
+        win = Imagewindow(self)
+        win.show_all()
+
+    def do_startup(self):
+        Gtk.Application.do_startup(self)
 
 def main():
-    win = Imagewindow()
-    win.connect('delete-event', Gtk.main_quit)
-    win.show_all()
-    Gtk.main()
+    app = Imageapplication()
+    app.run(None)
