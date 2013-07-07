@@ -263,11 +263,23 @@ class Imagewindow(Gtk.Window):
 
     def apply_orientation(self):
         orient = self.pixbuf.get_option('orientation')
-        if orient and int(orient) > 4:
-            if int(orient) == 8:
+        if orient and orient != '1':
+            if orient == '6':
+                self.image_rotate_right(None)
+            elif orient == '8':
                 self.image_rotate_left(None)
+            elif orient == '3':
+                self.image_rotate_ud()
+            elif orient == '2':
+                self.image_flip_horiz(None)
+            elif orient == '4':
+                self.image_flip_vert(None)
+            elif orient == '5':
+                self.image_rotate_right(None)
+                self.image_flip_horiz(None)
             else:
                 self.image_rotate_right(None)
+                self.image_flip_vert(None)
 
     def default_zoom_ratio(self, button, current):
         self.image_size = current.get_name()

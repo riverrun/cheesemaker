@@ -4,6 +4,8 @@ A simple image viewer using Python 3 and Gtk 3.
 
 At the moment, Cheesemaker supports zoom, fullscreen, rotating and flipping images, automatic orientation, displaying the images in grayscale, and resizing the image when the window is resized.
 
+There is no menubar or toolbar, but you can access the menu by right-clicking on the window. There are also keyboard shortcuts for most actions.
+
 There is now a slideshow, which can show random images or show the images in order. This option can also be changed while the slideshow is running.
 
 The save function is very basic - the quality of the saved image is not as good as it should be.

@@ -19,12 +19,13 @@
 
 import os, configparser
 from gi.repository import Gtk, Gdk
-#from xdg import BaseDirectory
 
 class Config(object):
     def __init__(self):
-        #self.config_dir = os.path.join(BaseDirectory.xdg_config_home, 'cheesemaker')
-        self.config_dir = os.path.join(os.path.expanduser('~/.config'), 'cheesemaker')
+        if os.environ.get('XDG_CONFIG_HOME'):
+            self.config_dir = os.path.join(os.environ.get('XDG_CONFIG_HOME'), 'cheesemaker')
+        else:
+            self.config_dir = os.path.join(os.path.expanduser('~/.config'), 'cheesemaker')
         if not os.path.isdir(self.config_dir):
             os.mkdir(self.config_dir)
         self.config_file = os.path.join(self.config_dir, 'cheesemaker.ini')

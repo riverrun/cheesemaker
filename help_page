@@ -4,12 +4,16 @@
 <span font="sans bold 12">Features</span>
 <span font="serif 11">Cheesemaker supports zoom, rotating and flipping images, automatic orientation, saving images, fullscreen view and a slideshow.</span>
 
+<span font="sans bold 11">General use</span>
+<span font="serif 11">Cheesemaker has no menubar or toolbar, but you can access the menu by right-clicking on the window. There are also keyboard shortcuts for most actions.
+None of the changes you make to images are automatically saved, and all the changes are lost when you go to another image or reload the same image.</span>
+
 <span font="sans bold 11">Slideshow and fullscreen</span>
 <span font="serif 11">While the image is being displayed fullscreen, the cursor will be hidden, but you can open the popup menu by right-clicking on the window.
 With the slideshow, the images can be viewed at random or in order. This option can even be changed while the slideshow is running. There is also an option, in the preferences section, to change the time delay between images.</span>
 
 <span font="sans bold 11">Preferences</span>
-<span font="serif 11">In addition to the option to change the time delay for the slideshow, you can also change the background color and enable, or disable, automatic orientation. Any changes you make to the preferences are saved in a configuration file.</span>
+<span font="serif 11">In addition to the option to change the time delay for the slideshow, you can also change the background color and enable, or disable, automatic orientation. Any changes you make to the preferences are saved for the next time you use Cheesemaker.</span>
 
 <span font="sans bold 12">Saving an image</span>
 <span font="serif 11">There is an option to save images, but there might be a decrease in quality.</span>
@@ -18,15 +22,15 @@ With the slideshow, the images can be viewed at random or in order. This option 
 <span font="sans bold 11">General</span>
     <span font="serif bold 11">Ctrl + O</span>    <span font="serif 11">Open an image</span>
     <span font="serif bold 11">Ctrl + D</span>    <span font="serif 11">Open a folder</span>
-    <span font="serif bold 11">Alt + Left</span>    <span font="serif 11">Open previous image</span>
-    <span font="serif bold 11">Alt + Right</span>    <span font="serif 11">Open next image</span>
-    <span font="serif bold 11">Ctrl + Left</span>    <span font="serif 11">Rotate left</span>
-    <span font="serif bold 11">Ctrl + Right</span>    <span font="serif 11">Rotate right</span>
-    <span font="serif bold 11">Ctrl + H</span>    <span font="serif 11">Flip horizontally</span>
-    <span font="serif bold 11">Ctrl + V</span>    <span font="serif 11">Flip vertically</span>
+    <span font="serif bold 11">Alt + Left</span>    <span font="serif 11">Go to previous image</span>
+    <span font="serif bold 11">Alt + Right</span>    <span font="serif 11">Go to next image</span>
+    <span font="serif bold 11">Ctrl + Left</span>    <span font="serif 11">Rotate the image to the left</span>
+    <span font="serif bold 11">Ctrl + Right</span>    <span font="serif 11">Rotate the image to the right</span>
+    <span font="serif bold 11">Ctrl + H</span>    <span font="serif 11">Flip the image horizontally</span>
+    <span font="serif bold 11">Ctrl + V</span>    <span font="serif 11">Flip the image vertically</span>
     <span font="serif bold 11">F11</span>    <span font="serif 11">Fullscreen</span>
     <span font="serif bold 11">F5</span>    <span font="serif 11">Slideshow</span>
-    <span font="serif bold 11">Ctrl + S</span>    <span font="serif 11">Save the crossword</span>
+    <span font="serif bold 11">Ctrl + S</span>    <span font="serif 11">Save the image</span>
     <span font="serif bold 11">Ctrl + Q</span>    <span font="serif 11">Quit the program</span>
     <span font="serif bold 11">F1</span>    <span font="serif 11">Open the help page</span>
     <span font="serif bold 11">Ctrl + P</span>    <span font="serif 11">Edit the preferences</span>
