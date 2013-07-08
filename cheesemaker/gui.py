@@ -27,24 +27,26 @@ ui_info = """
     <menuitem action='Open'/>
     <menuitem action='Opendir'/>
     <separator/>
+    <menuitem action='NewWin'/>
+    <separator/>
     <menuitem action='Saveas'/>
     <separator/>
     <menu action='EditMenu'>
-      <menuitem action='Rotateleft'/>
-      <menuitem action='Rotateright'/>
+      <menuitem action='RotateLeft'/>
+      <menuitem action='RotateRight'/>
       <separator/>
-      <menuitem action='Fliphoriz'/>
-      <menuitem action='Flipvert'/>
+      <menuitem action='FlipHoriz'/>
+      <menuitem action='FlipVert'/>
       <separator/>
       <menuitem action='Desaturate'/>
       <separator/>
       <menuitem action='Prefs'/>
     </menu>
     <menu action='ViewMenu'>
-      <menuitem action='Previmg'/>
-      <menuitem action='Nextimg'/>
+      <menuitem action='PrevImg'/>
+      <menuitem action='NextImg'/>
       <separator/>
-      <menuitem action='Reloadimg'/>
+      <menuitem action='ReloadImg'/>
       <separator/>
       <menu action='ZoomMenu'>
         <menuitem action='Zoomin'/>
@@ -64,6 +66,8 @@ ui_info = """
       <menuitem action='Help'/>
       <menuitem action='About'/>
     </menu>
+    <separator/>
+    <menuitem action='CloseWin'/>
     <separator/>
     <menuitem action='Quit'/>
   </popup>
@@ -105,7 +109,6 @@ class Imagewindow(Gtk.ApplicationWindow):
         self.list_clickable_buttons(uimanager)
         self.set_sensitivities(False)
         self.set_position(Gtk.WindowPosition.CENTER)
-        self.show_all
 
         self.format_list = ['ras', 'tif', 'tiff', 'wmf', 'icns', 'ico', 'png', 'wbmp', 
                 'gif', 'pnm', 'tga', 'ani', 'xbm', 'xpm', 'jpg', 'pcx', 'jpeg', 'bmp', 'svg']
@@ -114,24 +117,26 @@ class Imagewindow(Gtk.ApplicationWindow):
         action_group.add_actions([
             ('Open', Gtk.STOCK_OPEN, '_Open image', None, 'Open image', self.open_image),
             ('Opendir', None, 'Open fol_der', '<Ctrl>D', 'Open folder', self.open_dir),
+            ('NewWin', None, 'Open new _window', '<Ctrl><Shift>O', 'Open new window', self.new_win),
             ('Saveas', Gtk.STOCK_SAVE, '_Save image', None, 'Save image', self.save_image),
             ('EditMenu', None, '_Edit'),
-            ('Rotateleft', None, 'Rotate _left', '<Ctrl>Left', 'Rotate left', self.image_rotate_left),
-            ('Rotateright', None, 'Rotate _right', '<Ctrl>Right', 'Rotate right', self.image_rotate_right),
-            ('Fliphoriz', None, 'FLip _horizontally', '<Ctrl>H', 'Flip horizontally', self.image_flip_horiz),
-            ('Flipvert', None, 'FLip _vertically', '<Ctrl>V', 'Flip vertically', self.image_flip_vert),
+            ('RotateLeft', None, 'Rotate _left', '<Ctrl>Left', 'Rotate left', self.image_rotate_left),
+            ('RotateRight', None, 'Rotate _right', '<Ctrl>Right', 'Rotate right', self.image_rotate_right),
+            ('FlipHoriz', None, 'Flip _horizontally', '<Ctrl>H', 'Flip horizontally', self.image_flip_horiz),
+            ('FlipVert', None, 'Flip _vertically', '<Ctrl>V', 'Flip vertically', self.image_flip_vert),
             ('Prefs', None, 'Preferences', '<Ctrl>P', 'Preferences', self.set_preferences),
             ('ViewMenu', None, '_View'),
-            ('Nextimg', Gtk.STOCK_GO_FORWARD, '_Next image', '<Alt>Right', 'Next image', self.go_next_image),
-            ('Previmg', Gtk.STOCK_GO_BACK, '_Previous image', '<Alt>Left', 'Previous image', self.go_prev_image),
-            ('Reloadimg', Gtk.STOCK_REDO, '_Reload image', '<Ctrl>R', 'Reload image', self.reload_image),
+            ('NextImg', Gtk.STOCK_GO_FORWARD, '_Next image', '<Alt>Right', 'Go to next image', self.go_next_image),
+            ('PrevImg', Gtk.STOCK_GO_BACK, '_Previous image', '<Alt>Left', 'Go to previous image', self.go_prev_image),
+            ('ReloadImg', Gtk.STOCK_REDO, '_Reload image', '<Ctrl>R', 'Reload image', self.reload_image),
             ('SlidesOpts', None, 'S_lideshow options'),
             ('ZoomMenu', None, '_Zoom'),
-            ('Zoomin', Gtk.STOCK_ZOOM_IN, 'Zoom in', '<Ctrl>Up', 'Zoom in', self.image_zoom_in),
-            ('Zoomout', Gtk.STOCK_ZOOM_OUT, 'Zoom out', '<Ctrl>Down', 'Zoom out', self.image_zoom_out),
+            ('Zoomin', Gtk.STOCK_ZOOM_IN, 'Zoom in', '<Ctrl>Up', 'Enlarge the image', self.image_zoom_in),
+            ('Zoomout', Gtk.STOCK_ZOOM_OUT, 'Zoom out', '<Ctrl>Down', 'Shrink the image', self.image_zoom_out),
             ('HelpMenu', None, '_Help'),
             ('Help', Gtk.STOCK_HELP, 'Help', 'F1', 'Open the help page', self.help_page),
             ('About', Gtk.STOCK_ABOUT, 'About', None, 'About', self.about_dialog),
+            ('CloseWin', None, 'Close window', '<Ctrl>W', 'Close window', self.close_win),
             ('Quit', Gtk.STOCK_QUIT, 'Quit', None, 'Quit', self.quit_app)
             ])
 
@@ -167,9 +172,9 @@ class Imagewindow(Gtk.ApplicationWindow):
         scrolledwindow.add_with_viewport(self.image)
 
     def list_clickable_buttons(self, uimanager):
-        click_list = ['/PopupMenu/Saveas', '/PopupMenu/EditMenu/Rotateleft', '/PopupMenu/EditMenu/Rotateright', 
-                '/PopupMenu/EditMenu/Fliphoriz', '/PopupMenu/EditMenu/Flipvert', '/PopupMenu/EditMenu/Desaturate', 
-                '/PopupMenu/ViewMenu/Previmg', '/PopupMenu/ViewMenu/Nextimg', '/PopupMenu/ViewMenu/Reloadimg', 
+        click_list = ['/PopupMenu/Saveas', '/PopupMenu/EditMenu/RotateLeft', '/PopupMenu/EditMenu/RotateRight', 
+                '/PopupMenu/EditMenu/FlipHoriz', '/PopupMenu/EditMenu/FlipVert', '/PopupMenu/EditMenu/Desaturate', 
+                '/PopupMenu/ViewMenu/PrevImg', '/PopupMenu/ViewMenu/NextImg', '/PopupMenu/ViewMenu/ReloadImg', 
                 '/PopupMenu/ViewMenu/ZoomMenu/Zoomin', '/PopupMenu/ViewMenu/ZoomMenu/Zoomout', 
                 '/PopupMenu/ViewMenu/ZoomMenu/Zoom1to1', '/PopupMenu/ViewMenu/ZoomMenu/Zoomfit', 
                 '/PopupMenu/Full', '/PopupMenu/Slides']
@@ -421,6 +426,9 @@ class Imagewindow(Gtk.ApplicationWindow):
         self.reload_image(None)
         self.set_sensitivities(True)
 
+    def new_win(self, button):
+        self.app.new_win()
+
     def save_image(self, button):
         file_info = GdkPixbuf.Pixbuf.get_file_info(self.filename)
         filetype, width, height = file_info[0].get_name(), file_info[1], file_info[2]
@@ -485,7 +493,10 @@ class Imagewindow(Gtk.ApplicationWindow):
         about.run()
         about.destroy()
 
-    def quit_app(self, widget):
+    def close_win(self, button):
+        self.app.close_win(self)
+
+    def quit_app(self, button):
         self.app.quit()
 
 class Imageapplication(Gtk.Application):
@@ -498,6 +509,17 @@ class Imageapplication(Gtk.Application):
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
+
+    def new_win(self):
+        win = Imagewindow(self)
+        win.show_all()
+        self.add_window(win)
+
+    def close_win(self, window):
+        if len(self.get_windows()) == 1:
+            self.quit()
+        else:
+            window.destroy()
 
 def main():
     app = Imageapplication()
