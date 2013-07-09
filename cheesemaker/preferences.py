@@ -141,3 +141,24 @@ class HelpDialog(Gtk.Dialog):
         box.pack_start(scrolledwindow, True, True, 0)
         self.show_all()
 
+def about_dialog():
+    license = ('Cheesemaker is free software: you can redistribute it and/or modify '
+    'it under the terms of the GNU General Public License as published by '
+    'the Free Software Foundation, either version 3 of the License, or '
+    '(at your option) any later version.\n\n'
+    'Cheesemaker is distributed in the hope that it will be useful, '
+    'but WITHOUT ANY WARRANTY; without even the implied warranty of '
+    'MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the '
+    'GNU General Public License for more details.\n\n'
+    'You should have received a copy of the GNU General Public License '
+    'along with Cheesemaker. If not, see http://www.gnu.org/licenses/gpl.html')
+    about = Gtk.AboutDialog()
+    about.set_program_name('Cheesemaker')
+    about.set_version('0.2.1')
+    about.set_license(license)
+    about.set_wrap_license(True)
+    about.set_comments('A simple image viewer.')
+    about.set_authors(['David Whitlock <alovedalongthe@gmail.com>'])
+    about.set_logo_icon_name('cheesemaker')
+    about.run()
+    about.destroy()

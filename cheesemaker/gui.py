@@ -108,7 +108,6 @@ class Imagewindow(Gtk.ApplicationWindow):
         self.new_image_reset()
         self.list_clickable_buttons(uimanager)
         self.set_sensitivities(False)
-        self.set_position(Gtk.WindowPosition.CENTER)
 
         self.format_list = ['ras', 'tif', 'tiff', 'wmf', 'icns', 'ico', 'png', 'wbmp', 
                 'gif', 'pnm', 'tga', 'ani', 'xbm', 'xpm', 'jpg', 'pcx', 'jpeg', 'bmp', 'svg']
@@ -400,11 +399,11 @@ class Imagewindow(Gtk.ApplicationWindow):
         dialog.destroy()
         self.reload_image(None)
         self.set_sensitivities(True)
-        os.chdir(os.path.dirname(self.filename))
-        filelist = os.listdir()
-        self.filelist = [name for name in filelist if name.split('.')[-1].lower() in self.format_list]
+        dirname = os.path.dirname(self.filename)
+        filelist = os.listdir(dirname)
+        self.filelist = [os.path.join(dirname, name) for name in filelist if name.split('.')[-1].lower() in self.format_list]
         self.filelist.sort()
-        self.image_index = self.filelist.index(self.filename.split('/')[-1])
+        self.image_index = self.filelist.index(self.filename)
 
     def open_dir(self, button):
         dialog = Gtk.FileChooserDialog('Please choose a folder', self,
@@ -413,13 +412,13 @@ class Imagewindow(Gtk.ApplicationWindow):
              'Select', Gtk.ResponseType.OK))
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
-            os.chdir(dialog.get_filename())
+            dirname = dialog.get_filename()
         else:
             dialog.destroy()
             return
         dialog.destroy()
-        filelist = os.listdir()
-        self.filelist = [name for name in filelist if name.split('.')[-1].lower() in self.format_list]
+        filelist = os.listdir(dirname)
+        self.filelist = [os.path.join(dirname, name) for name in filelist if name.split('.')[-1].lower() in self.format_list]
         self.filelist.sort()
         self.image_index = 0
         self.filename = self.filelist[0]
@@ -448,8 +447,8 @@ class Imagewindow(Gtk.ApplicationWindow):
             dialog.destroy()
             return
         dialog.destroy()
-        image = self.modified_state()
-        image.savev(filename, filetype, [], [])
+        pixbuf = self.modified_state()
+        pixbuf.savev(filename, filetype, [], [])
 
     def on_button_press(self, widget, event, popup):
         if event.button == 3:
@@ -472,26 +471,7 @@ class Imagewindow(Gtk.ApplicationWindow):
         dialog.destroy()
 
     def about_dialog(self, button):
-        license = ('Cheesemaker is free software: you can redistribute it and/or modify '
-        'it under the terms of the GNU General Public License as published by '
-        'the Free Software Foundation, either version 3 of the License, or '
-        '(at your option) any later version.\n\n'
-        'Cheesemaker is distributed in the hope that it will be useful, '
-        'but WITHOUT ANY WARRANTY; without even the implied warranty of '
-        'MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the '
-        'GNU General Public License for more details.\n\n'
-        'You should have received a copy of the GNU General Public License '
-        'along with Cheesemaker. If not, see http://www.gnu.org/licenses/gpl.html')
-        about = Gtk.AboutDialog()
-        about.set_program_name('Cheesemaker')
-        about.set_version('0.2.1')
-        about.set_license(license)
-        about.set_wrap_license(True)
-        about.set_comments('A simple image viewer.')
-        about.set_authors(['David Whitlock <alovedalongthe@gmail.com>'])
-        about.set_logo_icon_name('cheesemaker')
-        about.run()
-        about.destroy()
+        preferences.about_dialog()
 
     def close_win(self, button):
         self.app.close_win(self)
