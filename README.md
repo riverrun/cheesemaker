@@ -2,7 +2,7 @@
 
 A simple image viewer using Python 3 and Gtk 3.
 
-At the moment, Cheesemaker supports zoom, fullscreen, rotating and flipping images, automatic orientation, displaying the images in grayscale, and resizing the image when the window is resized.
+At the moment, Cheesemaker supports zoom, fullscreen, rotating and flipping images, automatic orientation, displaying the images in grayscale, and resizing the image when the window is resized. You can also open, and view images in, multiple windows.
 
 There is no menubar or toolbar, but you can access the menu by right-clicking on the window. There are also keyboard shortcuts for most actions.
 

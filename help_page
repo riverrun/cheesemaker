@@ -2,7 +2,7 @@
 <span font="serif 11">Cheesemaker is a simple image viewer.</span>
 
 <span font="sans bold 12">Features</span>
-<span font="serif 11">Cheesemaker supports zoom, rotating and flipping images, automatic orientation, saving images, fullscreen view and a slideshow.</span>
+<span font="serif 11">Cheesemaker supports zoom, rotating and flipping images, automatic orientation, multiple windows, saving images, fullscreen view and a slideshow.</span>
 
 <span font="sans bold 11">General use</span>
 <span font="serif 11">Cheesemaker has no menubar or toolbar, but you can access the menu by right-clicking on the window. There are also keyboard shortcuts for most actions.

@@ -136,7 +136,7 @@ class Imagewindow(Gtk.ApplicationWindow):
             ('Help', Gtk.STOCK_HELP, 'Help', 'F1', 'Open the help page', self.help_page),
             ('About', Gtk.STOCK_ABOUT, 'About', None, 'About', self.about_dialog),
             ('CloseWin', None, 'Close window', '<Ctrl>W', 'Close window', self.close_win),
-            ('Quit', Gtk.STOCK_QUIT, 'Quit', None, 'Quit', self.quit_app)
+            ('Quit', Gtk.STOCK_QUIT, 'Close all windows', None, 'Close all windows', self.quit_app)
             ])
 
         action_group.add_toggle_actions([
@@ -354,18 +354,20 @@ class Imagewindow(Gtk.ApplicationWindow):
 
     def modified_state(self):
         self.rotate_state = self.rotate_state % 4
+        if self.image_size == 'Zoomfit':
+            if self.rotate_state % 2:
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.img_height, self.img_width)
+            else:
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.img_width, self.img_height)
+        else:
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
         if self.rotate_state:
             if self.rotate_state == 1:
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.img_height, self.img_width)
                 pixbuf = pixbuf.rotate_simple(GdkPixbuf.PixbufRotation.CLOCKWISE)
             elif self.rotate_state == 2:
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.img_width, self.img_height)
                 pixbuf = pixbuf.rotate_simple(GdkPixbuf.PixbufRotation.UPSIDEDOWN)
             else:
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.img_height, self.img_width)
                 pixbuf = pixbuf.rotate_simple(GdkPixbuf.PixbufRotation.COUNTERCLOCKWISE)
-        else:
-            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.img_width, self.img_height)
         if self.fliph:
             pixbuf = pixbuf.flip(True)
         if self.flipv:
@@ -401,7 +403,8 @@ class Imagewindow(Gtk.ApplicationWindow):
         self.set_sensitivities(True)
         dirname = os.path.dirname(self.filename)
         filelist = os.listdir(dirname)
-        self.filelist = [os.path.join(dirname, name) for name in filelist if name.split('.')[-1].lower() in self.format_list]
+        self.filelist = [os.path.join(dirname, name) for name in filelist if 
+                name.split('.')[-1].lower() in self.format_list]
         self.filelist.sort()
         self.image_index = self.filelist.index(self.filename)
 
@@ -418,7 +421,8 @@ class Imagewindow(Gtk.ApplicationWindow):
             return
         dialog.destroy()
         filelist = os.listdir(dirname)
-        self.filelist = [os.path.join(dirname, name) for name in filelist if name.split('.')[-1].lower() in self.format_list]
+        self.filelist = [os.path.join(dirname, name) for name in filelist if 
+                name.split('.')[-1].lower() in self.format_list]
         self.filelist.sort()
         self.image_index = 0
         self.filename = self.filelist[0]
@@ -471,7 +475,9 @@ class Imagewindow(Gtk.ApplicationWindow):
         dialog.destroy()
 
     def about_dialog(self, button):
-        preferences.about_dialog()
+        dialog = preferences.AboutDialog(self)
+        dialog.run()
+        dialog.destroy()
 
     def close_win(self, button):
         self.app.close_win(self)
