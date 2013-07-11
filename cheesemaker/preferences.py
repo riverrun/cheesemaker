@@ -37,14 +37,16 @@ class Config(object):
         bg_color = com['BackgroundColor'].strip('<Gdk.Color>()')
         bg_color = [float(num[-8:]) for num in bg_color.split(',')]
         slide_delay = int(com['SlideTimeDelay'])
-        return (orientation, bg_color, slide_delay)
+        recursive = com.getboolean('Recursive')
+        return (orientation, bg_color, slide_delay, recursive)
 
-    def write_config(self, orientation, bg_color, slide_delay):
+    def write_config(self, orientation, bg_color, slide_delay, recursive):
         self.config['Common'] = {}
         com = self.config['Common']
         com['AutoOrientation'] = str(orientation)
         com['BackgroundColor'] = str(bg_color)
         com['SlideTimeDelay'] = str(slide_delay)
+        com['Recursive'] = str(recursive)
         with open(self.config_file, 'w') as configfile:
             self.config.write(configfile)
 
@@ -54,13 +56,14 @@ class PrefsDialog(Gtk.Dialog):
             (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
              Gtk.STOCK_OK, Gtk.ResponseType.OK))
 
-        self.set_default_size(300, 250)
+        self.set_default_size(300, 300)
         box = self.get_content_area()
         box.set_border_width(16)
 
         self.auto_orientation = parent.auto_orientation
         self.bg_color = Gdk.RGBA(0.0, 0.0, 0.0, 1.0)
         self.slide_delay = parent.slide_delay
+        self.recursive = parent.recursive
 
         orient_title = Gtk.Label()
         box.pack_start(orient_title, True, True, 0)
@@ -79,6 +82,12 @@ class PrefsDialog(Gtk.Dialog):
         slide_delay_box = Gtk.Box()
         box.pack_start(slide_delay_box, True, True, 0)
         self.set_delay_view(slide_delay_title, slide_delay_box)
+
+        subdir_title = Gtk.Label()
+        box.pack_start(subdir_title, True, True, 0)
+        subdir_button = Gtk.CheckButton('Include images in subfolders')
+        box.pack_start(subdir_button, True, True, 0)
+        self.set_subdir_view(subdir_title, subdir_button)
 
         self.show_all()
 
@@ -112,8 +121,17 @@ class PrefsDialog(Gtk.Dialog):
         self.choose_delay.set_tooltip_text('Choose the time between images')
         slide_delay_box.pack_start(self.choose_delay, True, True, 0)
 
+    def set_subdir_view(self, subdir_title, subdir_button):
+        subdir_title.set_markup('<b>Show subfolders</b>')
+        subdir_title.set_halign(Gtk.Align.START)
+        subdir_button.connect('toggled', self.subdir)
+        subdir_button.set_active(self.recursive)
+
     def auto_orient(self, button):
         self.auto_orientation = button.get_active()
+
+    def subdir(self, button):
+        self.recursive = button.get_active()
 
 class HelpDialog(Gtk.Dialog):
     def __init__(self, parent):
@@ -155,7 +173,7 @@ class AboutDialog(Gtk.AboutDialog):
         'along with Cheesemaker. If not, see http://www.gnu.org/licenses/gpl.html')
 
         self.set_program_name('Cheesemaker')
-        self.set_version('0.2.1')
+        self.set_version('0.2.2')
         self.set_license(license)
         self.set_wrap_license(True)
         self.set_comments('A simple image viewer.')

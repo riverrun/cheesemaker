@@ -8,19 +8,18 @@ There is no menubar or toolbar, but you can access the menu by right-clicking on
 
 There is now a slideshow, which can show random images or show the images in order. This option can also be changed while the slideshow is running.
 
-The save function is very basic - the quality of the saved image is not as good as it should be.
+You can save images, but there might be a decrease in quality.
 
-The preferences (automatic orientation, background color, and slideshow time delay) are saved for the next time you use Cheesemaker.
+The preferences (automatic orientation, background color, slideshow time delay, and including images in subfolders) are saved for the next time you use Cheesemaker.
 
 ### TODO
 
-* Improve automatic orientation.
-* Make it faster.
-* Put my feet up and relax.
 * Improve saving.
-* Take it easy for a while.
+* Put my feet up and relax.
 * Make it faster.
-* Add a crop function.
+* Take it easy for a while.
+* Add some edit functions.
+* Make it faster.
 
 ### Dependencies
 

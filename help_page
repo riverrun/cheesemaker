@@ -10,10 +10,10 @@ None of the changes you make to images are automatically saved, and all the chan
 
 <span font="sans bold 11">Slideshow and fullscreen</span>
 <span font="serif 11">While the image is being displayed fullscreen, the cursor will be hidden, but you can open the popup menu by right-clicking on the window.
-With the slideshow, the images can be viewed at random or in order. This option can even be changed while the slideshow is running. There is also an option, in the preferences section, to change the time delay between images.</span>
+With the slideshow, the images can be viewed at random or in order. This option can even be changed while the slideshow is running. There is also an option, in the preferences section, to change the time delay between images. While the slideshow is running, the screensaver will be disabled.</span>
 
 <span font="sans bold 11">Preferences</span>
-<span font="serif 11">In addition to the option to change the time delay for the slideshow, you can also change the background color and enable, or disable, automatic orientation. Any changes you make to the preferences are saved for the next time you use Cheesemaker.</span>
+<span font="serif 11">In addition to the option to change the time delay for the slideshow, you can also change the background color and enable, or disable, automatic orientation. There is an option to include images in subfolders in the list of images you can open when you go to the previous, or next, image. Any changes you make to the preferences are saved for the next time you use Cheesemaker.</span>
 
 <span font="sans bold 12">Saving an image</span>
 <span font="serif 11">There is an option to save images, but there might be a decrease in quality.</span>

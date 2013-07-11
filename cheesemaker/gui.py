@@ -191,10 +191,12 @@ class Imagewindow(Gtk.ApplicationWindow):
             self.image.override_background_color(Gtk.StateType.NORMAL, 
                     Gdk.RGBA(values[1][0], values[1][1], values[1][2], values[1][3]))
             self.slide_delay = values[2]
+            self.recursive = values[3]
         except:
             self.auto_orientation = True
             self.image.override_background_color(Gtk.StateType.NORMAL, Gdk.RGBA(0.0, 0.0, 0.0, 1.0))
             self.slide_delay = 5
+            self.recursive = False
 
     def set_preferences(self, button):
         dialog = preferences.PrefsDialog(self)
@@ -203,8 +205,9 @@ class Imagewindow(Gtk.ApplicationWindow):
             self.auto_orientation = dialog.auto_orientation
             self.image.override_background_color(Gtk.StateType.NORMAL, dialog.color_button.get_rgba())
             self.slide_delay = dialog.choose_delay.get_value_as_int()
+            self.recursive = dialog.recursive
             conf = preferences.Config()
-            conf.write_config(self.auto_orientation, dialog.color_button.get_rgba(), self.slide_delay)
+            conf.write_config(self.auto_orientation, dialog.color_button.get_rgba(), self.slide_delay, self.recursive)
         dialog.destroy()
 
     def toggle_slides(self, button):
@@ -257,11 +260,13 @@ class Imagewindow(Gtk.ApplicationWindow):
     def load_image_fit(self):
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.win_width, self.win_height)
         self.img_width, self.img_height = self.win_width, self.win_height
+        self.set_title(self.filename.split('/')[-1])
 
     def load_image_1to1(self):
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
         self.img_width = self.pixbuf.get_width()
         self.img_height = self.pixbuf.get_height()
+        self.set_title(self.filename.split('/')[-1])
 
     def reload_image(self, button):
         self.new_image_reset()
@@ -401,10 +406,15 @@ class Imagewindow(Gtk.ApplicationWindow):
         dialog.destroy()
         self.reload_image(None)
         self.set_sensitivities(True)
-        dirname = os.path.dirname(self.filename)
-        filelist = os.listdir(dirname)
-        self.filelist = [os.path.join(dirname, name) for name in filelist if 
-                name.split('.')[-1].lower() in self.format_list]
+        dir_name = os.path.dirname(self.filename)
+        if self.recursive:
+            self.filelist = [os.path.join(dirname, filename) for dirname, dirnames, filenames 
+                    in os.walk(dir_name) for filename in filenames if 
+                    filename.split('.')[-1].lower() in self.format_list]
+        else:
+            filelist = os.listdir(dir_name)
+            self.filelist = [os.path.join(dir_name, name) for name in filelist if 
+                    name.split('.')[-1].lower() in self.format_list]
         self.filelist.sort()
         self.image_index = self.filelist.index(self.filename)
 
@@ -412,17 +422,22 @@ class Imagewindow(Gtk.ApplicationWindow):
         dialog = Gtk.FileChooserDialog('Please choose a folder', self,
             Gtk.FileChooserAction.SELECT_FOLDER,
             (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-             'Select', Gtk.ResponseType.OK))
+             Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
-            dirname = dialog.get_filename()
+            dir_name = dialog.get_filename()
         else:
             dialog.destroy()
             return
         dialog.destroy()
-        filelist = os.listdir(dirname)
-        self.filelist = [os.path.join(dirname, name) for name in filelist if 
-                name.split('.')[-1].lower() in self.format_list]
+        if self.recursive:
+            self.filelist = [os.path.join(dirname, filename) for dirname, dirnames, filenames 
+                    in os.walk(dir_name) for filename in filenames if 
+                    filename.split('.')[-1].lower() in self.format_list]
+        else:
+            filelist = os.listdir(dir_name)
+            self.filelist = [os.path.join(dir_name, name) for name in filelist if 
+                    name.split('.')[-1].lower() in self.format_list]
         self.filelist.sort()
         self.image_index = 0
         self.filename = self.filelist[0]
