@@ -260,17 +260,16 @@ class Imagewindow(Gtk.ApplicationWindow):
     def load_image_fit(self):
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.win_width, self.win_height)
         self.img_width, self.img_height = self.win_width, self.win_height
-        self.set_title(self.filename.split('/')[-1])
 
     def load_image_1to1(self):
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
         self.img_width = self.pixbuf.get_width()
         self.img_height = self.pixbuf.get_height()
-        self.set_title(self.filename.split('/')[-1])
 
     def reload_image(self, button):
         self.new_image_reset()
         self.load_image()
+        self.set_title(self.filename.split('/')[-1])
         if self.auto_orientation:
             self.apply_orientation()
         self.image.set_from_pixbuf(self.pixbuf)
@@ -450,9 +449,8 @@ class Imagewindow(Gtk.ApplicationWindow):
     def save_image(self, button):
         file_info = GdkPixbuf.Pixbuf.get_file_info(self.filename)
         filetype, width, height = file_info[0].get_name(), file_info[1], file_info[2]
-        extension = filetype.replace('e', '')
-        filename = 'Gumby.' + extension
-        dialog = Gtk.FileChooserDialog('Please write a name for your image', self,
+        filename = self.filename.split('/')[-1]
+        dialog = Gtk.FileChooserDialog('Please choose a name for your image', self,
             Gtk.FileChooserAction.SAVE,
             (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
              Gtk.STOCK_SAVE, Gtk.ResponseType.OK))
@@ -466,8 +464,13 @@ class Imagewindow(Gtk.ApplicationWindow):
             dialog.destroy()
             return
         dialog.destroy()
+        self.image_size = 'Zoom1to1'
         pixbuf = self.modified_state()
-        pixbuf.savev(filename, filetype, [], [])
+        if filetype == 'jpeg':
+            pixbuf.savev(filename, filetype, ['quality'], ['100'])
+        else:
+            pixbuf.savev(filename, filetype, [], [])
+        self.image_size = 'Zoomfit'
 
     def on_button_press(self, widget, event, popup):
         if event.button == 3:
