@@ -192,11 +192,15 @@ class Imagewindow(Gtk.ApplicationWindow):
                     Gdk.RGBA(values[1][0], values[1][1], values[1][2], values[1][3]))
             self.slide_delay = values[2]
             self.recursive = values[3]
+            self.quality = values[4]
+            self.rem_exif_data = values[5]
         except:
             self.auto_orientation = True
             self.image.override_background_color(Gtk.StateType.NORMAL, Gdk.RGBA(0.0, 0.0, 0.0, 1.0))
             self.slide_delay = 5
             self.recursive = False
+            self.quality = 90
+            self.rem_exif_data = False
 
     def set_preferences(self, button):
         dialog = preferences.PrefsDialog(self)
@@ -206,8 +210,11 @@ class Imagewindow(Gtk.ApplicationWindow):
             self.image.override_background_color(Gtk.StateType.NORMAL, dialog.color_button.get_rgba())
             self.slide_delay = dialog.choose_delay.get_value_as_int()
             self.recursive = dialog.recursive
+            self.quality = dialog.choose_quality.get_value_as_int()
+            self.rem_exif_data = dialog.rem_exif_data
             conf = preferences.Config()
-            conf.write_config(self.auto_orientation, dialog.color_button.get_rgba(), self.slide_delay, self.recursive)
+            conf.write_config(self.auto_orientation, dialog.color_button.get_rgba(), 
+                    self.slide_delay, self.recursive, self.quality, self.rem_exif_data)
         dialog.destroy()
 
     def toggle_slides(self, button):
@@ -467,7 +474,7 @@ class Imagewindow(Gtk.ApplicationWindow):
         self.image_size = 'Zoom1to1'
         pixbuf = self.modified_state()
         if filetype == 'jpeg':
-            pixbuf.savev(filename, filetype, ['quality'], ['100'])
+            pixbuf.savev(filename, filetype, ['quality'], [str(self.quality)])
         else:
             pixbuf.savev(filename, filetype, [], [])
         self.image_size = 'Zoomfit'
