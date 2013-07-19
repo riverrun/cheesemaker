@@ -82,8 +82,8 @@ class Imagewindow(Gtk.ApplicationWindow):
         self.set_default_size(700, 500)
         self.set_default_icon_name('cheesemaker')
         self.image = Gtk.Image()
-        self.image_size = 'Zoomfit'
-        self.load_image = self.load_image_fit
+        self.img_size = 'Zoomfit'
+        self.load_img = self.load_img_fit
         self.win_width = 0
         self.win_height = 0
 
@@ -105,7 +105,7 @@ class Imagewindow(Gtk.ApplicationWindow):
 
         graylist = ['/PopupMenu/EditMenu/Desaturate']
         self.graylist = [uimanager.get_widget(name) for name in graylist]
-        self.new_image_reset()
+        self.new_img_reset()
         self.list_clickable_buttons(uimanager)
         self.set_sensitivities(False)
 
@@ -119,19 +119,19 @@ class Imagewindow(Gtk.ApplicationWindow):
             ('NewWin', None, 'Open new _window', '<Ctrl><Shift>O', 'Open new window', self.new_win),
             ('Saveas', Gtk.STOCK_SAVE, '_Save image', None, 'Save image', self.save_image),
             ('EditMenu', None, '_Edit'),
-            ('RotateLeft', None, 'Rotate _left', '<Ctrl>Left', 'Rotate left', self.image_rotate_left),
-            ('RotateRight', None, 'Rotate _right', '<Ctrl>Right', 'Rotate right', self.image_rotate_right),
-            ('FlipHoriz', None, 'Flip _horizontally', '<Ctrl>H', 'Flip horizontally', self.image_flip_horiz),
-            ('FlipVert', None, 'Flip _vertically', '<Ctrl>V', 'Flip vertically', self.image_flip_vert),
+            ('RotateLeft', None, 'Rotate _left', '<Ctrl>Left', 'Rotate left', self.img_rotate_left),
+            ('RotateRight', None, 'Rotate _right', '<Ctrl>Right', 'Rotate right', self.img_rotate_right),
+            ('FlipHoriz', None, 'Flip _horizontally', '<Ctrl>H', 'Flip horizontally', self.img_flip_horiz),
+            ('FlipVert', None, 'Flip _vertically', '<Ctrl>V', 'Flip vertically', self.img_flip_vert),
             ('Prefs', None, 'Preferences', '<Ctrl>P', 'Preferences', self.set_preferences),
             ('ViewMenu', None, '_View'),
-            ('NextImg', Gtk.STOCK_GO_FORWARD, '_Next image', '<Alt>Right', 'Go to next image', self.go_next_image),
-            ('PrevImg', Gtk.STOCK_GO_BACK, '_Previous image', '<Alt>Left', 'Go to previous image', self.go_prev_image),
-            ('ReloadImg', Gtk.STOCK_REDO, '_Reload image', '<Ctrl>R', 'Reload image', self.reload_image),
+            ('NextImg', Gtk.STOCK_GO_FORWARD, '_Next image', '<Alt>Right', 'Go to next image', self.go_next_img),
+            ('PrevImg', Gtk.STOCK_GO_BACK, '_Previous image', '<Alt>Left', 'Go to previous image', self.go_prev_img),
+            ('ReloadImg', Gtk.STOCK_REDO, '_Reload image', '<Ctrl>R', 'Reload image', self.reload_img),
             ('SlidesOpts', None, 'S_lideshow options'),
             ('ZoomMenu', None, '_Zoom'),
-            ('Zoomin', Gtk.STOCK_ZOOM_IN, 'Zoom in', '<Ctrl>Up', 'Enlarge the image', self.image_zoom_in),
-            ('Zoomout', Gtk.STOCK_ZOOM_OUT, 'Zoom out', '<Ctrl>Down', 'Shrink the image', self.image_zoom_out),
+            ('Zoomin', Gtk.STOCK_ZOOM_IN, 'Zoom in', '<Ctrl>Up', 'Enlarge the image', self.img_zoom_in),
+            ('Zoomout', Gtk.STOCK_ZOOM_OUT, 'Zoom out', '<Ctrl>Down', 'Shrink the image', self.img_zoom_out),
             ('HelpMenu', None, '_Help'),
             ('Help', Gtk.STOCK_HELP, 'Help', 'F1', 'Open the help page', self.help_page),
             ('About', Gtk.STOCK_ABOUT, 'About', None, 'About', self.about_dialog),
@@ -229,10 +229,10 @@ class Imagewindow(Gtk.ApplicationWindow):
 
     def start_slideshow(self):
         if self.slideshow_type:
-            self.go_next_image(None)
+            self.go_next_img(None)
         else:
             self.filename = random.choice(self.filelist)
-            self.reload_image(None)
+            self.reload_img(None)
         return True
 
     def slideshow_options(self, button, current):
@@ -260,22 +260,22 @@ class Imagewindow(Gtk.ApplicationWindow):
             self.grays = True
         else:
             self.grays = False
-            self.load_image()
+            self.load_img()
             self.pixbuf = self.modified_state()
         self.image.set_from_pixbuf(self.pixbuf)
 
-    def load_image_fit(self):
+    def load_img_fit(self):
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.win_width, self.win_height)
         self.img_width, self.img_height = self.win_width, self.win_height
 
-    def load_image_1to1(self):
+    def load_img_1to1(self):
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
         self.img_width = self.pixbuf.get_width()
         self.img_height = self.pixbuf.get_height()
 
-    def reload_image(self, button):
-        self.new_image_reset()
-        self.load_image()
+    def reload_img(self, button):
+        self.new_img_reset()
+        self.load_img()
         self.set_title(self.filename.split('/')[-1])
         if self.auto_orientation:
             self.apply_orientation()
@@ -285,97 +285,90 @@ class Imagewindow(Gtk.ApplicationWindow):
         orient = self.pixbuf.get_option('orientation')
         if orient and orient != '1':
             if orient == '6':
-                self.image_rotate_right(None)
+                self.img_rotate_right(None)
             elif orient == '8':
-                self.image_rotate_left(None)
+                self.img_rotate_left(None)
             elif orient == '3':
-                self.image_rotate_ud()
+                self.img_rotate_ud()
             elif orient == '2':
-                self.image_flip_horiz(None)
+                self.img_flip_horiz(None)
             elif orient == '4':
-                self.image_flip_vert(None)
+                self.img_flip_vert(None)
             elif orient == '5':
-                self.image_rotate_right(None)
-                self.image_flip_horiz(None)
+                self.img_rotate_right(None)
+                self.img_flip_horiz(None)
             else:
-                self.image_rotate_right(None)
-                self.image_flip_vert(None)
+                self.img_rotate_right(None)
+                self.img_flip_vert(None)
 
     def default_zoom_ratio(self, button, current):
-        self.image_size = current.get_name()
-        if self.image_size == 'Zoomfit':
-            self.load_image = self.load_image_fit
+        self.img_size = current.get_name()
+        if self.img_size == 'Zoomfit':
+            self.load_img = self.load_img_fit
         else:
-            self.load_image = self.load_image_1to1
-        self.load_image()
+            self.load_img = self.load_img_1to1
+        self.load_img()
         self.pixbuf = self.modified_state()
         self.image.set_from_pixbuf(self.pixbuf)
 
-    def image_zoom_in(self, button):
-        self.image_zoom(1.25)
+    def img_zoom_in(self, button):
+        self.img_zoom(1.25)
 
-    def image_zoom_out(self, button):
-        self.image_zoom(0.8)
+    def img_zoom_out(self, button):
+        self.img_zoom(0.8)
 
-    def image_zoom(self, zoomratio):
+    def img_zoom(self, zoomratio):
         self.img_width, self.img_height = self.img_width*zoomratio, self.img_height*zoomratio
         self.pixbuf = self.modified_state()
         self.image.set_from_pixbuf(self.pixbuf)
 
-    def go_next_image(self, button):
-        if self.image_index < len(self.filelist)-1:
-            self.image_index += 1
-        else:
-            self.image_index = 0
-        self.filename = self.filelist[self.image_index]
-        self.reload_image(None)
+    def go_next_img(self, button):
+        self.img_index = self.img_index + 1 if self.img_index < self.last_file else 0
+        self.filename = self.filelist[self.img_index]
+        self.reload_img(None)
 
-    def go_prev_image(self, button):
-        if self.image_index > 0:
-            self.image_index -= 1
-        else:
-            self.image_index = len(self.filelist)-1
-        self.filename = self.filelist[self.image_index]
-        self.reload_image(None)
+    def go_prev_img(self, button):
+        self.img_index = self.img_index - 1 if self.img_index else self.last_file
+        self.filename = self.filelist[self.img_index]
+        self.reload_img(None)
 
-    def image_rotate_left(self, button):
-        self.rotate_state -= 1
+    def img_rotate_left(self, button):
+        self.mod_state = self.mod_state - 1 if self.mod_state else 3
         self.pixbuf = self.modified_state()
         self.image.set_from_pixbuf(self.pixbuf)
 
-    def image_rotate_right(self, button):
-        self.rotate_state += 1
+    def img_rotate_right(self, button):
+        self.mod_state = self.mod_state + 1 if self.mod_state < 3 else 0
         self.pixbuf = self.modified_state()
         self.image.set_from_pixbuf(self.pixbuf)
 
-    def image_rotate_ud(self):
-        self.rotate_state += 2
+    def img_rotate_ud(self):
+        self.mod_state += 2
         self.pixbuf = self.modified_state()
         self.image.set_from_pixbuf(self.pixbuf)
 
-    def image_flip_horiz(self, button):
+    def img_flip_horiz(self, button):
         self.pixbuf = self.pixbuf.flip(True)
         self.image.set_from_pixbuf(self.pixbuf)
         self.fliph = not self.fliph
 
-    def image_flip_vert(self, button):
+    def img_flip_vert(self, button):
         self.pixbuf = self.pixbuf.flip(False)
         self.image.set_from_pixbuf(self.pixbuf)
         self.flipv = not self.flipv
 
     def modified_state(self):
-        self.rotate_state = self.rotate_state % 4
-        if self.image_size == 'Zoomfit':
-            if self.rotate_state % 2:
+        if self.img_size == 'Zoomfit':
+            if self.mod_state % 2:
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.img_height, self.img_width)
             else:
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.img_width, self.img_height)
         else:
             pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
-        if self.rotate_state:
-            if self.rotate_state == 1:
+        if self.mod_state:
+            if self.mod_state == 1:
                 pixbuf = pixbuf.rotate_simple(GdkPixbuf.PixbufRotation.CLOCKWISE)
-            elif self.rotate_state == 2:
+            elif self.mod_state == 2:
                 pixbuf = pixbuf.rotate_simple(GdkPixbuf.PixbufRotation.UPSIDEDOWN)
             else:
                 pixbuf = pixbuf.rotate_simple(GdkPixbuf.PixbufRotation.COUNTERCLOCKWISE)
@@ -387,8 +380,8 @@ class Imagewindow(Gtk.ApplicationWindow):
             pixbuf.saturate_and_pixelate(pixbuf, 0.0, False)
         return pixbuf
 
-    def new_image_reset(self):
-        self.rotate_state = 0
+    def new_img_reset(self):
+        self.mod_state = 0
         self.fliph = False
         self.flipv = False
         self.grays = False
@@ -410,7 +403,7 @@ class Imagewindow(Gtk.ApplicationWindow):
             dialog.destroy()
             return
         dialog.destroy()
-        self.reload_image(None)
+        self.reload_img(None)
         self.set_sensitivities(True)
         dir_name = os.path.dirname(self.filename)
         if self.recursive:
@@ -422,7 +415,8 @@ class Imagewindow(Gtk.ApplicationWindow):
             self.filelist = [os.path.join(dir_name, name) for name in filelist if 
                     name.split('.')[-1].lower() in self.format_list]
         self.filelist.sort()
-        self.image_index = self.filelist.index(self.filename)
+        self.last_file = len(self.filelist) - 1
+        self.img_index = self.filelist.index(self.filename)
 
     def open_dir(self, button):
         dialog = Gtk.FileChooserDialog('Please choose a folder', self,
@@ -445,9 +439,10 @@ class Imagewindow(Gtk.ApplicationWindow):
             self.filelist = [os.path.join(dir_name, name) for name in filelist if 
                     name.split('.')[-1].lower() in self.format_list]
         self.filelist.sort()
-        self.image_index = 0
+        self.last_file = len(self.filelist) - 1
+        self.img_index = 0
         self.filename = self.filelist[0]
-        self.reload_image(None)
+        self.reload_img(None)
         self.set_sensitivities(True)
 
     def new_win(self, button):
@@ -471,13 +466,13 @@ class Imagewindow(Gtk.ApplicationWindow):
             dialog.destroy()
             return
         dialog.destroy()
-        self.image_size = 'Zoom1to1'
+        self.img_size = 'Zoom1to1'
         pixbuf = self.modified_state()
+        option_list, value_list = [], []
         if filetype == 'jpeg':
-            pixbuf.savev(filename, filetype, ['quality'], [str(self.quality)])
-        else:
-            pixbuf.savev(filename, filetype, [], [])
-        self.image_size = 'Zoomfit'
+            option_list.append('quality');value_list.append(str(self.quality))
+        pixbuf.savev(filename, filetype, option_list, value_list)
+        self.img_size = 'Zoomfit'
 
     def on_button_press(self, widget, event, popup):
         if event.button == 3:
@@ -488,7 +483,7 @@ class Imagewindow(Gtk.ApplicationWindow):
             if self.win_width != allocation.width or self.win_height != allocation.height:
                 self.win_width = allocation.width
                 self.win_height = allocation.height
-                self.load_image()
+                self.load_img()
                 self.pixbuf = self.modified_state()
                 self.image.set_from_pixbuf(self.pixbuf)
         except:
