@@ -23,7 +23,7 @@ from distutils.core import setup
 
 setup(
     name = 'cheesemaker',
-    version = '0.2.2',
+    version = '0.2.3',
     packages = ['cheesemaker'],
     scripts = ['bin/cheesemaker'],
     data_files = [

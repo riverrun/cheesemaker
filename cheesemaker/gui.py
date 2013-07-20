@@ -40,21 +40,18 @@ ui_info = """
       <menuitem action='FlipVert'/>
       <separator/>
       <menuitem action='Desaturate'/>
-      <separator/>
-      <menuitem action='Prefs'/>
     </menu>
+    <separator/>
     <menu action='ViewMenu'>
       <menuitem action='PrevImg'/>
       <menuitem action='NextImg'/>
       <separator/>
       <menuitem action='ReloadImg'/>
       <separator/>
-      <menu action='ZoomMenu'>
-        <menuitem action='Zoomin'/>
-        <menuitem action='Zoomout'/>
-        <menuitem action='Zoom1to1'/>
-        <menuitem action='Zoomfit'/>
-      </menu>
+      <menuitem action='Zoomin'/>
+      <menuitem action='Zoomout'/>
+      <menuitem action='Zoom1to1'/>
+      <menuitem action='Zoomfit'/>
     </menu>
     <menuitem action='Full'/>
     <menuitem action='Slides'/>
@@ -67,6 +64,8 @@ ui_info = """
       <menuitem action='Help'/>
       <menuitem action='About'/>
     </menu>
+    <separator/>
+    <menuitem action='Prefs'/>
     <separator/>
     <menuitem action='CloseWin'/>
     <separator/>
@@ -100,9 +99,9 @@ class Imagewindow(Gtk.ApplicationWindow):
         self.read_preferences()
         self.slideshow_type = 'NextSlides'
 
-        popup = uimanager.get_widget('/PopupMenu')
+        self.popup = uimanager.get_widget('/PopupMenu')
         self.set_events(Gdk.EventMask.BUTTON_PRESS_MASK|Gdk.EventMask.STRUCTURE_MASK)
-        self.connect('button-press-event', self.on_button_press, popup)
+        self.connect('button-press-event', self.on_button_press)
 
         self.graybutton = uimanager.get_widget('/PopupMenu/EditMenu/Desaturate')
         self.new_img_reset()
@@ -128,7 +127,6 @@ class Imagewindow(Gtk.ApplicationWindow):
             ('PrevImg', Gtk.STOCK_GO_BACK, '_Previous image', '<Alt>Left', 'Go to previous image', self.go_prev_img),
             ('ReloadImg', Gtk.STOCK_REDO, '_Reload image', '<Ctrl>R', 'Reload image', self.reload_img),
             ('SlidesOpts', None, 'S_lideshow options'),
-            ('ZoomMenu', None, '_Zoom'),
             ('Zoomin', Gtk.STOCK_ZOOM_IN, 'Zoom in', '<Ctrl>Up', 'Enlarge the image', self.img_zoom_in),
             ('Zoomout', Gtk.STOCK_ZOOM_OUT, 'Zoom out', '<Ctrl>Down', 'Shrink the image', self.img_zoom_out),
             ('HelpMenu', None, '_Help'),
@@ -205,13 +203,17 @@ class Imagewindow(Gtk.ApplicationWindow):
 
     def toggle_slides(self, button):
         if button.get_active():
-            self.set_fullscreen()
+            self.fullscreen()
+            cursor = Gdk.Cursor.new(Gdk.CursorType.BLANK_CURSOR)
+            self.get_window().set_cursor(cursor)
             self.slide_cookie = self.app.inhibit(self, Gtk.ApplicationInhibitFlags.IDLE, 'Disable slideshow')
             self.timer_delay = GLib.timeout_add_seconds(self.slide_delay, self.start_slideshow)
         else:
             self.app.uninhibit(self.slide_cookie)
             GLib.source_remove(self.timer_delay)
-            self.set_unfullscreen()
+            self.unfullscreen()
+            cursor = Gdk.Cursor.new(Gdk.CursorType.ARROW)
+            self.get_window().set_cursor(cursor)
 
     def start_slideshow(self):
         if self.slideshow_type:
@@ -226,19 +228,9 @@ class Imagewindow(Gtk.ApplicationWindow):
 
     def toggle_full(self, button):
         if button.get_active():
-            self.set_fullscreen()
+            self.fullscreen()
         else:
-            self.set_unfullscreen()
-
-    def set_fullscreen(self):
-        self.fullscreen()
-        cursor = Gdk.Cursor.new(Gdk.CursorType.BLANK_CURSOR)
-        self.get_window().set_cursor(cursor)
-
-    def set_unfullscreen(self):
-        self.unfullscreen()
-        cursor = Gdk.Cursor.new(Gdk.CursorType.ARROW)
-        self.get_window().set_cursor(cursor)
+            self.unfullscreen()
 
     def toggle_gray(self, button):
         if button.get_active():
@@ -471,21 +463,21 @@ class Imagewindow(Gtk.ApplicationWindow):
         dialog.run()
         dialog.destroy()
 
-    def on_button_press(self, widget, event, popup):
+    def on_button_press(self, widget, event):
         if event.button == 1:
-            coords = event.get_coords()
-            if coords[0] < 150:
+            x_pos = event.x_root
+            if x_pos < 150:
                 if event.state == Gdk.ModifierType.CONTROL_MASK:
                     self.img_rotate_left(None)
                 else:
                     self.go_prev_img(None)
-            elif coords[0] > self.win_width - 150:
+            elif x_pos > self.win_width - 150:
                 if event.state == Gdk.ModifierType.CONTROL_MASK:
                     self.img_rotate_right(None)
                 else:
                     self.go_next_img(None)
         if event.button == 3:
-            popup.popup(None, None, None, None, 0, event.time)
+            self.popup.popup(None, None, None, None, 0, event.time)
 
     def on_resize(self, widget, allocation):
         try:
@@ -517,7 +509,7 @@ class Imagewindow(Gtk.ApplicationWindow):
 class Imageapplication(Gtk.Application):
     def __init__(self):
         Gtk.Application.__init__(self, application_id='org.riverrun.Cheesemaker')
-        self.set_flags(Gio.ApplicationFlags.HANDLES_OPEN)
+        self.set_flags(Gio.ApplicationFlags.HANDLES_OPEN) # This does not work at the moment
 
     def do_open(self, files, n_files, hint):
         print(files)

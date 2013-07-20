@@ -222,7 +222,7 @@ class AboutDialog(Gtk.AboutDialog):
         'along with Cheesemaker. If not, see http://www.gnu.org/licenses/gpl.html')
 
         self.set_program_name('Cheesemaker')
-        self.set_version('0.2.2')
+        self.set_version('0.2.3')
         self.set_license(license)
         self.set_wrap_license(True)
         self.set_comments('A simple image viewer.')
