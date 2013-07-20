@@ -5,7 +5,7 @@
 <span font="serif 11">Cheesemaker supports zoom, rotating and flipping images, automatic orientation, multiple windows, saving images, fullscreen view and a slideshow.</span>
 
 <span font="sans bold 11">General use</span>
-<span font="serif 11">Cheesemaker has no menubar or toolbar, but you can access the menu by right-clicking on the window. There are also keyboard shortcuts for most actions.
+<span font="serif 11">Cheesemaker has no menubar or toolbar, but you can access the menu by right-clicking on the window. There are also keyboard shortcuts for most actions. In addition, you can now access some functions by clicking on different parts of the window. For example, left-clicking on the right side of the image window will take you to the next image in the list. All these mouse shortcuts are listed below.
 None of the changes you make to images are automatically saved, and all the changes are lost when you go to another image or reload the same image.</span>
 
 <span font="sans bold 11">Slideshow and fullscreen</span>
@@ -17,6 +17,12 @@ With the slideshow, the images can be viewed at random or in order. This option 
 
 <span font="sans bold 12">Saving an image</span>
 <span font="serif 11">There is an option to save images, but there might be a decrease in quality.</span>
+
+<span font="sans bold 12">Mouse shortcuts</span>
+    <span font="serif bold 11">Click near the right edge</span>    <span font="serif 11">Go to next image</span>
+    <span font="serif bold 11">Ctrl + click near the right edge</span>    <span font="serif 11">Rotate the image to the right</span>
+    <span font="serif bold 11">Click near the left edge</span>    <span font="serif 11">Go to previous image</span>
+    <span font="serif bold 11">Ctrl + click near the left edge</span>    <span font="serif 11">Rotate the image to the left</span>
 
 <span font="sans bold 12">Keyboard shortcuts</span>
 <span font="sans bold 11">General</span>

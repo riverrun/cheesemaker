@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Cheesemaker.  If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
+from gi.repository import Gtk, Gdk, GdkPixbuf, GLib, Gio
 import os, random
 from . import preferences
+#from . import preferences, editimage
 
 ui_info = """
 <ui>
@@ -103,14 +104,12 @@ class Imagewindow(Gtk.ApplicationWindow):
         self.set_events(Gdk.EventMask.BUTTON_PRESS_MASK|Gdk.EventMask.STRUCTURE_MASK)
         self.connect('button-press-event', self.on_button_press, popup)
 
-        graylist = ['/PopupMenu/EditMenu/Desaturate']
-        self.graylist = [uimanager.get_widget(name) for name in graylist]
+        self.graybutton = uimanager.get_widget('/PopupMenu/EditMenu/Desaturate')
         self.new_img_reset()
-        self.list_clickable_buttons(uimanager)
-        self.set_sensitivities(False)
 
-        self.format_list = ['ras', 'tif', 'tiff', 'wmf', 'icns', 'ico', 'png', 'wbmp', 
+        self.readable_list = ['ras', 'tif', 'tiff', 'wmf', 'icns', 'ico', 'png', 'wbmp', 
                 'gif', 'pnm', 'tga', 'ani', 'xbm', 'xpm', 'jpg', 'pcx', 'jpeg', 'bmp', 'svg']
+        self.writable_list = ['ico', 'png', 'tiff', 'bmp', 'jpeg']
 
     def actions(self, action_group):
         action_group.add_actions([
@@ -169,19 +168,6 @@ class Imagewindow(Gtk.ApplicationWindow):
         scrolledwindow.connect('size-allocate', self.on_resize)
         self.grid.attach(scrolledwindow, 0, 0, 1, 1)
         scrolledwindow.add_with_viewport(self.image)
-
-    def list_clickable_buttons(self, uimanager):
-        click_list = ['/PopupMenu/Saveas', '/PopupMenu/EditMenu/RotateLeft', '/PopupMenu/EditMenu/RotateRight', 
-                '/PopupMenu/EditMenu/FlipHoriz', '/PopupMenu/EditMenu/FlipVert', '/PopupMenu/EditMenu/Desaturate', 
-                '/PopupMenu/ViewMenu/PrevImg', '/PopupMenu/ViewMenu/NextImg', '/PopupMenu/ViewMenu/ReloadImg', 
-                '/PopupMenu/ViewMenu/ZoomMenu/Zoomin', '/PopupMenu/ViewMenu/ZoomMenu/Zoomout', 
-                '/PopupMenu/ViewMenu/ZoomMenu/Zoom1to1', '/PopupMenu/ViewMenu/ZoomMenu/Zoomfit', 
-                '/PopupMenu/Full', '/PopupMenu/Slides']
-        self.click_buttons = [uimanager.get_widget(name) for name in click_list]
-
-    def set_sensitivities(self, value):
-        for button in self.click_buttons:
-            button.set_sensitive(value)
 
     def read_preferences(self):
         try:
@@ -276,7 +262,7 @@ class Imagewindow(Gtk.ApplicationWindow):
     def reload_img(self, button):
         self.new_img_reset()
         self.load_img()
-        self.set_title(self.filename.split('/')[-1])
+        self.set_title(self.filename.rsplit('/', 1)[1])
         if self.auto_orientation:
             self.apply_orientation()
         self.image.set_from_pixbuf(self.pixbuf)
@@ -344,6 +330,7 @@ class Imagewindow(Gtk.ApplicationWindow):
 
     def img_rotate_ud(self):
         self.mod_state += 2
+        self.mod_state %= 4
         self.pixbuf = self.modified_state()
         self.image.set_from_pixbuf(self.pixbuf)
 
@@ -385,96 +372,118 @@ class Imagewindow(Gtk.ApplicationWindow):
         self.fliph = False
         self.flipv = False
         self.grays = False
-        for name in self.graylist:
-            name.set_active(False)
+        self.graybutton.set_active(False)
 
     def open_image(self, button):
-        dialog = Gtk.FileChooserDialog('Please choose a file', self,
-            Gtk.FileChooserAction.OPEN,
-            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-             Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
-        filefilter = Gtk.FileFilter()
-        filefilter.add_pixbuf_formats()
-        dialog.set_filter(filefilter)
-        response = dialog.run()
-        if response == Gtk.ResponseType.OK:
-            self.filename = dialog.get_filename()
-        else:
-            dialog.destroy()
+        title = 'Please choose a file'
+        file_action = Gtk.FileChooserAction.OPEN
+        ok_icon = Gtk.STOCK_OPEN
+        filefilter = True
+        self.filename = self.file_dialog(title, file_action, ok_icon, None, True)
+        if not self.filename:
             return
-        dialog.destroy()
         self.reload_img(None)
-        self.set_sensitivities(True)
         dir_name = os.path.dirname(self.filename)
         if self.recursive:
             self.filelist = [os.path.join(dirname, filename) for dirname, dirnames, filenames 
                     in os.walk(dir_name) for filename in filenames if 
-                    filename.split('.')[-1].lower() in self.format_list]
+                    filename.rsplit('.', 1)[-1].lower() in self.readable_list]
         else:
             filelist = os.listdir(dir_name)
             self.filelist = [os.path.join(dir_name, name) for name in filelist if 
-                    name.split('.')[-1].lower() in self.format_list]
+                    name.rsplit('.', 1)[-1].lower() in self.readable_list]
         self.filelist.sort()
         self.last_file = len(self.filelist) - 1
         self.img_index = self.filelist.index(self.filename)
 
     def open_dir(self, button):
-        dialog = Gtk.FileChooserDialog('Please choose a folder', self,
-            Gtk.FileChooserAction.SELECT_FOLDER,
-            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-             Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
-        response = dialog.run()
-        if response == Gtk.ResponseType.OK:
-            dir_name = dialog.get_filename()
-        else:
-            dialog.destroy()
+        title = 'Please choose a folder'
+        file_action = Gtk.FileChooserAction.SELECT_FOLDER
+        ok_icon = Gtk.STOCK_OPEN
+        dir_name = self.file_dialog(title, file_action, ok_icon, None)
+        if not dir_name:
             return
-        dialog.destroy()
         if self.recursive:
             self.filelist = [os.path.join(dirname, filename) for dirname, dirnames, filenames 
                     in os.walk(dir_name) for filename in filenames if 
-                    filename.split('.')[-1].lower() in self.format_list]
+                    filename.rsplit('.', 1)[-1].lower() in self.readable_list]
         else:
             filelist = os.listdir(dir_name)
             self.filelist = [os.path.join(dir_name, name) for name in filelist if 
-                    name.split('.')[-1].lower() in self.format_list]
+                    name.rsplit('.', 1)[-1].lower() in self.readable_list]
         self.filelist.sort()
         self.last_file = len(self.filelist) - 1
         self.img_index = 0
         self.filename = self.filelist[0]
         self.reload_img(None)
-        self.set_sensitivities(True)
 
     def new_win(self, button):
         self.app.new_win()
 
     def save_image(self, button):
-        file_info = GdkPixbuf.Pixbuf.get_file_info(self.filename)
-        filetype, width, height = file_info[0].get_name(), file_info[1], file_info[2]
-        filename = self.filename.split('/')[-1]
-        dialog = Gtk.FileChooserDialog('Please choose a name for your image', self,
-            Gtk.FileChooserAction.SAVE,
-            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-             Gtk.STOCK_SAVE, Gtk.ResponseType.OK))
-        dialog.set_current_name(filename)
-        dialog.set_do_overwrite_confirmation(True)
-        response = dialog.run()
-        if response == Gtk.ResponseType.OK:
-            filename = dialog.get_filename()
-            self.img_width, self.img_height = width, height
+        filetype = GdkPixbuf.Pixbuf.get_file_info(self.filename)[0].get_name()
+        name = self.filename.rsplit('/', 1)[1]
+        if filetype in self.writable_list:
+            title = 'Please choose a name for your image'
+            file_action = Gtk.FileChooserAction.SAVE
+            ok_icon = Gtk.STOCK_SAVE
+            filename = self.file_dialog(title, file_action, ok_icon, name, False, True)
+            if not filename:
+                return
         else:
-            dialog.destroy()
+            message = 'Sorry, we cannot save ' + filetype + ' images'
+            title = 'Cannot save ' + name
+            self.error_dialog(title, message)
             return
-        dialog.destroy()
+        img_size = self.img_size
         self.img_size = 'Zoom1to1'
         pixbuf = self.modified_state()
         option_list, value_list = [], []
         if filetype == 'jpeg':
-            option_list.append('quality');value_list.append(str(self.quality))
+            option_list.append('quality'); value_list.append(str(self.quality))
         pixbuf.savev(filename, filetype, option_list, value_list)
-        self.img_size = 'Zoomfit'
+        self.img_size = img_size
+
+    def file_dialog(self, title, file_action, ok_icon, filename, filefilter=False, saving=False):
+        dialog = Gtk.FileChooserDialog(title, self, file_action, 
+            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+             ok_icon, Gtk.ResponseType.OK))
+        if filefilter:
+            filefilter = Gtk.FileFilter()
+            filefilter.add_pixbuf_formats()
+            dialog.set_filter(filefilter)
+        if saving:
+            dialog.set_current_name(filename)
+            dialog.set_do_overwrite_confirmation(True)
+        response = dialog.run()
+        if response == Gtk.ResponseType.OK:
+            name = dialog.get_filename()
+        else:
+            dialog.destroy()
+            return
+        dialog.destroy()
+        return name
+
+    def error_dialog(self, title, message):
+        dialog = Gtk.MessageDialog(self, 0, Gtk.MessageType.ERROR,
+                Gtk.ButtonsType.CLOSE, message)
+        dialog.set_title(title)
+        dialog.run()
+        dialog.destroy()
 
     def on_button_press(self, widget, event, popup):
+        if event.button == 1:
+            coords = event.get_coords()
+            if coords[0] < 150:
+                if event.state == Gdk.ModifierType.CONTROL_MASK:
+                    self.img_rotate_left(None)
+                else:
+                    self.go_prev_img(None)
+            elif coords[0] > self.win_width - 150:
+                if event.state == Gdk.ModifierType.CONTROL_MASK:
+                    self.img_rotate_right(None)
+                else:
+                    self.go_next_img(None)
         if event.button == 3:
             popup.popup(None, None, None, None, 0, event.time)
 
@@ -508,6 +517,12 @@ class Imagewindow(Gtk.ApplicationWindow):
 class Imageapplication(Gtk.Application):
     def __init__(self):
         Gtk.Application.__init__(self, application_id='org.riverrun.Cheesemaker')
+        self.set_flags(Gio.ApplicationFlags.HANDLES_OPEN)
+
+    def do_open(self, files, n_files, hint):
+        print(files)
+        print(n_files)
+        print(hint)
 
     def do_activate(self):
         win = Imagewindow(self)
