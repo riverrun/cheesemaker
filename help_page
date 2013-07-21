@@ -5,15 +5,14 @@
 <span font="serif 11">Cheesemaker supports zoom, rotating and flipping images, automatic orientation, multiple windows, saving images, fullscreen view and a slideshow.</span>
 
 <span font="sans bold 12">General use</span>
-<span font="serif 11">Cheesemaker has no menubar or toolbar, but you can access the menu by right-clicking on the window. There are also keyboard shortcuts for most actions. In addition, you can now access some functions by clicking on different parts of the window. For example, left-clicking on the right side of the image window will take you to the next image in the list. All these mouse shortcuts are listed below.
-None of the changes you make to images are automatically saved, and all the changes are lost when you go to another image or reload the same image.</span>
+<span font="serif 11">Cheesemaker has no menubar or toolbar, but you can access the menu by right-clicking on the window. There are also keyboard shortcuts for most actions. In addition, you can now access some functions by clicking on different parts of the window. For example, left-clicking on the right side of the image window will take you to the next image in the list. All these mouse shortcuts are listed below.</span>
 
 <span font="sans bold 12">Slideshow</span>
 <span font="serif 11">While the slideshow is running, the cursor will be hidden, but you can open the popup menu by right-clicking on the window.
 With the slideshow, the images can be viewed at random or in order. This option can even be changed while the slideshow is running. There is also an option, in the preferences section, to change the time delay between images. While the slideshow is running, the screensaver will be disabled.</span>
 
 <span font="sans bold 12">Saving an image</span>
-<span font="serif 11">There is an option to save images, and for jpeg images you can adjust the default quality in the preferences section, but any image (exif) data will be lost.</span>
+<span font="serif 11">There is an option to save images, and for jpeg images you can adjust the default quality in the preferences section, but any image (exif) data will be lost. None of the changes you make to images are automatically saved, and all the changes are lost when you go to another image or reload the same image.</span>
 
 <span font="sans bold 12">Preferences</span>
 <span font="serif 11">In addition to the save options and the option to change the time delay for the slideshow, you can also change the background color and enable, or disable, automatic orientation. There is an option to include images in subfolders in the list of images you can open when you go to the previous, or next, image. Any changes you make to the preferences are saved for the next time you use Cheesemaker.</span>

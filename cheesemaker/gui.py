@@ -18,7 +18,7 @@
 # along with Cheesemaker.  If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 from gi.repository import Gtk, Gdk, GdkPixbuf, GLib, Gio
-import os, random
+import sys, os, random
 from . import preferences
 #from . import preferences, editimage
 
@@ -75,17 +75,18 @@ ui_info = """
 """
 
 class Imagewindow(Gtk.ApplicationWindow):
-    def __init__(self, app):
+    def __init__(self, app, filename):
         Gtk.Window.__init__(self, title='Cheesemaker', application=app)
 
         self.app = app
+        self.filename = filename
         self.set_default_size(700, 500)
         self.set_default_icon_name('cheesemaker')
         self.image = Gtk.Image()
         self.img_size = 'Zoomfit'
         self.load_img = self.load_img_fit
-        self.win_width = 0
-        self.win_height = 0
+        self.win_width = 700
+        self.win_height = 500
 
         self.grid = Gtk.Grid()
         self.add(self.grid)
@@ -109,12 +110,18 @@ class Imagewindow(Gtk.ApplicationWindow):
         self.readable_list = ['ras', 'tif', 'tiff', 'wmf', 'icns', 'ico', 'png', 'wbmp', 
                 'gif', 'pnm', 'tga', 'ani', 'xbm', 'xpm', 'jpg', 'pcx', 'jpeg', 'bmp', 'svg']
         self.writable_list = ['ico', 'png', 'tiff', 'bmp', 'jpeg']
+        if self.filename:
+            self.reload_img(None)
+            dirname = os.path.dirname(self.filename)
+            self.set_img_list(dirname)
+            self.img_index = self.filelist.index(self.filename)
 
     def actions(self, action_group):
         action_group.add_actions([
             ('Open', Gtk.STOCK_OPEN, '_Open image', None, 'Open image', self.open_image),
             ('Opendir', None, 'Open fol_der', '<Ctrl>D', 'Open folder', self.open_dir),
-            ('NewWin', None, 'Open new _window', '<Ctrl><Shift>O', 'Open new window', self.new_win),
+            ('NewWin', None, 'Open image in a new _window', '<Ctrl><Shift>O', 
+                'Open image in a new window', self.open_image),
             ('Saveas', Gtk.STOCK_SAVE, '_Save image', None, 'Save image', self.save_image),
             ('EditMenu', None, '_Edit'),
             ('RotateLeft', None, 'Rotate _left', '<Ctrl>Left', 'Rotate left', self.img_rotate_left),
@@ -374,43 +381,37 @@ class Imagewindow(Gtk.ApplicationWindow):
         self.filename = self.file_dialog(title, file_action, ok_icon, None, True)
         if not self.filename:
             return
-        self.reload_img(None)
-        dir_name = os.path.dirname(self.filename)
-        if self.recursive:
-            self.filelist = [os.path.join(dirname, filename) for dirname, dirnames, filenames 
-                    in os.walk(dir_name) for filename in filenames if 
-                    filename.rsplit('.', 1)[-1].lower() in self.readable_list]
+        if button.get_name() == 'Open':
+            self.reload_img(None)
+            dirname = os.path.dirname(self.filename)
+            self.set_img_list(dirname)
+            self.img_index = self.filelist.index(self.filename)
         else:
-            filelist = os.listdir(dir_name)
-            self.filelist = [os.path.join(dir_name, name) for name in filelist if 
-                    name.rsplit('.', 1)[-1].lower() in self.readable_list]
-        self.filelist.sort()
-        self.last_file = len(self.filelist) - 1
-        self.img_index = self.filelist.index(self.filename)
+            self.app.new_win(self.filename)
 
     def open_dir(self, button):
         title = 'Please choose a folder'
         file_action = Gtk.FileChooserAction.SELECT_FOLDER
         ok_icon = Gtk.STOCK_OPEN
-        dir_name = self.file_dialog(title, file_action, ok_icon, None)
-        if not dir_name:
+        dirname = self.file_dialog(title, file_action, ok_icon, None)
+        if not dirname:
             return
-        if self.recursive:
-            self.filelist = [os.path.join(dirname, filename) for dirname, dirnames, filenames 
-                    in os.walk(dir_name) for filename in filenames if 
-                    filename.rsplit('.', 1)[-1].lower() in self.readable_list]
-        else:
-            filelist = os.listdir(dir_name)
-            self.filelist = [os.path.join(dir_name, name) for name in filelist if 
-                    name.rsplit('.', 1)[-1].lower() in self.readable_list]
-        self.filelist.sort()
-        self.last_file = len(self.filelist) - 1
+        self.set_img_list(dirname)
         self.img_index = 0
         self.filename = self.filelist[0]
         self.reload_img(None)
 
-    def new_win(self, button):
-        self.app.new_win()
+    def set_img_list(self, dirname):
+        if self.recursive:
+            self.filelist = [os.path.join(dirpath, filename) for dirpath, dirnames, filenames 
+                    in os.walk(dirname) for filename in filenames if 
+                    filename.rsplit('.', 1)[-1].lower() in self.readable_list]
+        else:
+            filelist = os.listdir(dirname)
+            self.filelist = [os.path.join(dirname, name) for name in filelist if 
+                    name.rsplit('.', 1)[-1].lower() in self.readable_list]
+        self.filelist.sort()
+        self.last_file = len(self.filelist) - 1
 
     def save_image(self, button):
         filetype = GdkPixbuf.Pixbuf.get_file_info(self.filename)[0].get_name()
@@ -423,8 +424,8 @@ class Imagewindow(Gtk.ApplicationWindow):
             if not filename:
                 return
         else:
-            message = 'Sorry, we cannot save ' + filetype + ' images'
             title = 'Cannot save ' + name
+            message = 'Sorry, we cannot save ' + filetype + ' images'
             self.error_dialog(title, message)
             return
         img_size = self.img_size
@@ -509,22 +510,21 @@ class Imagewindow(Gtk.ApplicationWindow):
 class Imageapplication(Gtk.Application):
     def __init__(self):
         Gtk.Application.__init__(self, application_id='org.riverrun.Cheesemaker')
-        self.set_flags(Gio.ApplicationFlags.HANDLES_OPEN) # This does not work at the moment
+        self.set_flags(Gio.ApplicationFlags.HANDLES_OPEN)
 
     def do_open(self, files, n_files, hint):
-        print(files)
-        print(n_files)
-        print(hint)
+        for name in files:
+            filename = name.get_path()
+            self.new_win(filename)
 
     def do_activate(self):
-        win = Imagewindow(self)
-        win.show_all()
+        self.new_win(None)
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
 
-    def new_win(self):
-        win = Imagewindow(self)
+    def new_win(self, filename):
+        win = Imagewindow(self, filename)
         win.show_all()
         self.add_window(win)
 
@@ -536,4 +536,4 @@ class Imageapplication(Gtk.Application):
 
 def main():
     app = Imageapplication()
-    app.run(None)
+    app.run(sys.argv)
