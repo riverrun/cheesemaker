@@ -79,7 +79,6 @@ class Imagewindow(Gtk.ApplicationWindow):
         Gtk.Window.__init__(self, title='Cheesemaker', application=app)
 
         self.app = app
-        self.filename = filename
         self.set_default_size(700, 500)
         self.set_default_icon_name('cheesemaker')
         self.image = Gtk.Image()
@@ -107,14 +106,20 @@ class Imagewindow(Gtk.ApplicationWindow):
         self.graybutton = uimanager.get_widget('/PopupMenu/EditMenu/Desaturate')
         self.new_img_reset()
 
-        self.readable_list = ['ras', 'tif', 'tiff', 'wmf', 'icns', 'ico', 'png', 'wbmp', 
-                'gif', 'pnm', 'tga', 'ani', 'xbm', 'xpm', 'jpg', 'pcx', 'jpeg', 'bmp', 'svg']
+        self.readable_list = ('ras', 'tif', 'tiff', 'wmf', 'icns', 'ico', 'png', 'wbmp', 
+                'gif', 'pnm', 'tga', 'ani', 'xbm', 'xpm', 'jpg', 'pcx', 'jpeg', 'bmp', 'svg')
         self.writable_list = ['ico', 'png', 'tiff', 'bmp', 'jpeg']
-        if self.filename:
-            self.reload_img(None)
-            dirname = os.path.dirname(self.filename)
-            self.set_img_list(dirname)
-            self.img_index = self.filelist.index(self.filename)
+        if filename:
+            if filename.endswith(self.readable_list):
+                self.filename = filename
+                self.reload_img(None)
+                dirname = os.path.dirname(self.filename)
+                self.set_img_list(dirname)
+                self.img_index = self.filelist.index(self.filename)
+            else:
+                title = 'Cannot open ' + filename
+                message = 'Sorry, we cannot open ' + filename
+                self.error_dialog(title, message)
 
     def actions(self, action_group):
         action_group.add_actions([
@@ -378,16 +383,17 @@ class Imagewindow(Gtk.ApplicationWindow):
         file_action = Gtk.FileChooserAction.OPEN
         ok_icon = Gtk.STOCK_OPEN
         filefilter = True
-        self.filename = self.file_dialog(title, file_action, ok_icon, None, True)
-        if not self.filename:
+        filename = self.file_dialog(title, file_action, ok_icon, None, True)
+        if not filename:
             return
         if button.get_name() == 'Open':
+            self.filename = filename
             self.reload_img(None)
             dirname = os.path.dirname(self.filename)
             self.set_img_list(dirname)
             self.img_index = self.filelist.index(self.filename)
         else:
-            self.app.new_win(self.filename)
+            self.app.new_win(filename)
 
     def open_dir(self, button):
         title = 'Please choose a folder'
@@ -405,11 +411,11 @@ class Imagewindow(Gtk.ApplicationWindow):
         if self.recursive:
             self.filelist = [os.path.join(dirpath, filename) for dirpath, dirnames, filenames 
                     in os.walk(dirname) for filename in filenames if 
-                    filename.rsplit('.', 1)[-1].lower() in self.readable_list]
+                    filename.endswith(self.readable_list)]
         else:
             filelist = os.listdir(dirname)
             self.filelist = [os.path.join(dirname, name) for name in filelist if 
-                    name.rsplit('.', 1)[-1].lower() in self.readable_list]
+                    name.endswith(self.readable_list)]
         self.filelist.sort()
         self.last_file = len(self.filelist) - 1
 
@@ -466,7 +472,7 @@ class Imagewindow(Gtk.ApplicationWindow):
 
     def on_button_press(self, widget, event):
         if event.button == 1:
-            x_pos = event.x_root
+            x_pos = event.x
             if x_pos < 150:
                 if event.state == Gdk.ModifierType.CONTROL_MASK:
                     self.img_rotate_left(None)
