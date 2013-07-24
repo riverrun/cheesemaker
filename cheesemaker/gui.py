@@ -18,9 +18,9 @@
 # along with Cheesemaker.  If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 from gi.repository import Gtk, Gdk, GdkPixbuf, GLib, Gio
-import sys, os, random
+import sys, os
+from random import choice
 from . import preferences
-#from . import preferences, editimage
 
 ui_info = """
 <ui>
@@ -103,6 +103,7 @@ class Imagewindow(Gtk.ApplicationWindow):
         self.set_events(Gdk.EventMask.BUTTON_PRESS_MASK|Gdk.EventMask.STRUCTURE_MASK)
         self.connect('button-press-event', self.on_button_press)
 
+        self.create_dict()
         self.graybutton = uimanager.get_widget('/PopupMenu/EditMenu/Desaturate')
         self.new_img_reset()
 
@@ -213,6 +214,17 @@ class Imagewindow(Gtk.ApplicationWindow):
                     self.slide_delay, self.recursive, self.quality, self.rem_exif_data)
         dialog.destroy()
 
+    def create_dict(self):
+        self.orient_dict = {None: self.do_nothing,
+                '1': self.do_nothing,
+                '2': self.img_flip_horiz,
+                '3': self.img_rotate_ud,
+                '4': self.img_flip_vert,
+                '5': self.img_rotate_fliph,
+                '6': self.img_rotate_right,
+                '7': self.img_rotate_flipv,
+                '8': self.img_rotate_left}
+
     def toggle_slides(self, button):
         if button.get_active():
             self.fullscreen()
@@ -231,7 +243,7 @@ class Imagewindow(Gtk.ApplicationWindow):
         if self.slideshow_type:
             self.go_next_img(None)
         else:
-            self.filename = random.choice(self.filelist)
+            self.filename = choice(self.filelist)
             self.reload_img(None)
         return True
 
@@ -268,28 +280,9 @@ class Imagewindow(Gtk.ApplicationWindow):
         self.load_img()
         self.set_title(self.filename.rsplit('/', 1)[1])
         if self.auto_orientation:
-            self.apply_orientation()
+            orient = self.pixbuf.get_option('orientation')
+            self.orient_dict[orient](None)
         self.image.set_from_pixbuf(self.pixbuf)
-
-    def apply_orientation(self):
-        orient = self.pixbuf.get_option('orientation')
-        if orient and orient != '1':
-            if orient == '6':
-                self.img_rotate_right(None)
-            elif orient == '8':
-                self.img_rotate_left(None)
-            elif orient == '3':
-                self.img_rotate_ud()
-            elif orient == '2':
-                self.img_flip_horiz(None)
-            elif orient == '4':
-                self.img_flip_vert(None)
-            elif orient == '5':
-                self.img_rotate_right(None)
-                self.img_flip_horiz(None)
-            else:
-                self.img_rotate_right(None)
-                self.img_flip_vert(None)
 
     def default_zoom_ratio(self, button, current):
         self.img_size = current.get_name()
@@ -332,11 +325,19 @@ class Imagewindow(Gtk.ApplicationWindow):
         self.pixbuf = self.modified_state()
         self.image.set_from_pixbuf(self.pixbuf)
 
-    def img_rotate_ud(self):
+    def img_rotate_ud(self, button):
         self.mod_state += 2
         self.mod_state %= 4
         self.pixbuf = self.modified_state()
         self.image.set_from_pixbuf(self.pixbuf)
+
+    def img_rotate_fliph(self, button):
+        self.img_rotate_right(None)
+        self.img_flip_horiz(None)
+
+    def img_rotate_flipv(self, button):
+        self.img_rotate_right(None)
+        self.img_flip_vert(None)
 
     def img_flip_horiz(self, button):
         self.pixbuf = self.pixbuf.flip(True)
@@ -409,14 +410,17 @@ class Imagewindow(Gtk.ApplicationWindow):
 
     def set_img_list(self, dirname):
         if self.recursive:
-            self.filelist = [os.path.join(dirpath, filename) for dirpath, dirnames, filenames 
-                    in os.walk(dirname) for filename in filenames if 
-                    filename.endswith(self.readable_list)]
+            self.filelist = []
+            filelist = [[os.path.join(dirpath, filename) for filename in filenames 
+                if filename.endswith(self.readable_list)] 
+                for dirpath, dirnames, filenames in os.walk(dirname)]
+            [sublist.sort() for sublist in filelist]
+            self.filelist = [item for sublist in filelist for item in sublist]
         else:
             filelist = os.listdir(dirname)
-            self.filelist = [os.path.join(dirname, name) for name in filelist if 
-                    name.endswith(self.readable_list)]
-        self.filelist.sort()
+            self.filelist = [os.path.join(dirname, filename) for filename in filelist 
+                if filename.endswith(self.readable_list)]
+            self.filelist.sort()
         self.last_file = len(self.filelist) - 1
 
     def save_image(self, button):
@@ -454,6 +458,8 @@ class Imagewindow(Gtk.ApplicationWindow):
         if saving:
             dialog.set_current_name(filename)
             dialog.set_do_overwrite_confirmation(True)
+        else:
+            dialog.set_current_folder(os.path.expanduser('~/Pictures'))
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
             name = dialog.get_filename()
@@ -472,13 +478,13 @@ class Imagewindow(Gtk.ApplicationWindow):
 
     def on_button_press(self, widget, event):
         if event.button == 1:
-            x_pos = event.x
-            if x_pos < 150:
+            x = event.x
+            if x < 150:
                 if event.state == Gdk.ModifierType.CONTROL_MASK:
                     self.img_rotate_left(None)
                 else:
                     self.go_prev_img(None)
-            elif x_pos > self.win_width - 150:
+            elif x > self.win_width - 150:
                 if event.state == Gdk.ModifierType.CONTROL_MASK:
                     self.img_rotate_right(None)
                 else:
@@ -512,6 +518,9 @@ class Imagewindow(Gtk.ApplicationWindow):
 
     def quit_app(self, button):
         self.app.quit()
+
+    def do_nothing(self, button):
+        pass
 
 class Imageapplication(Gtk.Application):
     def __init__(self):

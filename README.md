@@ -18,7 +18,7 @@ The preferences (automatic orientation, background color, slideshow time delay, 
 
 * Improve saving (add an option to save exif data).
 * Put my feet up and relax.
-* Try to make it more memory efficient.
+* Maybe add a library option.
 * Take it easy for a while.
 * Add some edit functions.
 * Make it faster.
