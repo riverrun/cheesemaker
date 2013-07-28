@@ -10,22 +10,21 @@ There is no menubar or toolbar, but you can access the menu by right-clicking on
 
 There is a slideshow, which can show random images or show the images in order. This option can also be changed while the slideshow is running. The screensaver is disabled while the slideshow is running.
 
-You can save images, but any image (exif) data will be lost.
+You can save images, and the image (exif) data will be saved. However, the orientation data will be rewritten, so that the next time you open the image it will appear the same way.
 
-The preferences (automatic orientation, background color, slideshow time delay, certain save options, and including images in subfolders) are saved for the next time you use Cheesemaker.
+The preferences (automatic orientation, background color, slideshow time delay, jpeg image quality, and including images in subfolders) are saved for the next time you use Cheesemaker.
 
 ### TODO
 
-* Improve saving (add an option to save exif data).
-* Put my feet up and relax.
 * Maybe add a library option.
-* Take it easy for a while.
+* Put my feet up and relax.
 * Add some edit functions.
+* Take it easy for a while.
 * Make it faster.
 
 ### Dependencies
 
-Cheesemaker depends on python3, python3-gi and gir1.2-gdkpixbuf-2.0.
+Cheesemaker depends on python3, python3-gobject (python3-gi), gdk-pixbuf2 (gir1.2-gdkpixbuf-2.0) and libgexiv2 (gir1.2-gexiv2).
 
 ### Author
 

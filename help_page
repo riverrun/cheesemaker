@@ -12,7 +12,7 @@
 With the slideshow, the images can be viewed at random or in order. This option can even be changed while the slideshow is running. There is also an option, in the preferences section, to change the time delay between images. While the slideshow is running, the screensaver will be disabled.</span>
 
 <span font="sans bold 12">Saving an image</span>
-<span font="serif 11">There is an option to save images, and for jpeg images you can adjust the default quality in the preferences section, but any image (exif) data will be lost. None of the changes you make to images are automatically saved, and all the changes are lost when you go to another image or reload the same image.</span>
+<span font="serif 11">There is an option to save images, and for jpeg images you can adjust the default quality in the preferences section. If there is any image (exif) data, it will be saved, but the orientation data will be rewritten. This is so that the image appears with the orientation with which you saved it. None of the changes you make to images are automatically saved, and all the changes are lost when you go to another image or reload the same image.</span>
 
 <span font="sans bold 12">Preferences</span>
 <span font="serif 11">In addition to the save options and the option to change the time delay for the slideshow, you can also change the background color and enable, or disable, automatic orientation. There is an option to include images in subfolders in the list of images you can open when you go to the previous, or next, image. Any changes you make to the preferences are saved for the next time you use Cheesemaker.</span>

@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Cheesemaker.  If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from gi.repository import Gtk, Gdk, GdkPixbuf, GLib, Gio
-import sys, os
-from random import choice
+from gi.repository import Gtk, Gdk, GdkPixbuf, GLib, Gio, GExiv2
+import sys
+import os
+import random
 from . import preferences
 
 ui_info = """
@@ -107,11 +108,11 @@ class Imagewindow(Gtk.ApplicationWindow):
         self.graybutton = uimanager.get_widget('/PopupMenu/EditMenu/Desaturate')
         self.new_img_reset()
 
-        self.readable_list = ('ras', 'tif', 'tiff', 'wmf', 'icns', 'ico', 'png', 'wbmp', 
+        self.readable_list = ('ras', 'tif', 'tiff', 'wmf', 'icns', 'ico', 'png', 'wbmp',
                 'gif', 'pnm', 'tga', 'ani', 'xbm', 'xpm', 'jpg', 'pcx', 'jpeg', 'bmp', 'svg')
         self.writable_list = ['ico', 'png', 'tiff', 'bmp', 'jpeg']
         if filename:
-            if filename.endswith(self.readable_list):
+            if filename.lower().endswith(self.readable_list):
                 self.filename = filename
                 self.reload_img(None)
                 dirname = os.path.dirname(self.filename)
@@ -126,7 +127,7 @@ class Imagewindow(Gtk.ApplicationWindow):
         action_group.add_actions([
             ('Open', Gtk.STOCK_OPEN, '_Open image', None, 'Open image', self.open_image),
             ('Opendir', None, 'Open fol_der', '<Ctrl>D', 'Open folder', self.open_dir),
-            ('NewWin', None, 'Open image in a new _window', '<Ctrl><Shift>O', 
+            ('NewWin', None, 'Open image in a new _window', '<Ctrl><Shift>O',
                 'Open image in a new window', self.open_image),
             ('Saveas', Gtk.STOCK_SAVE, '_Save image', None, 'Save image', self.save_image),
             ('EditMenu', None, '_Edit'),
@@ -185,19 +186,17 @@ class Imagewindow(Gtk.ApplicationWindow):
             conf = preferences.Config()
             values = conf.read_config()
             self.auto_orientation = values[0]
-            self.image.override_background_color(Gtk.StateType.NORMAL, 
+            self.image.override_background_color(Gtk.StateType.NORMAL,
                     Gdk.RGBA(values[1][0], values[1][1], values[1][2], values[1][3]))
             self.slide_delay = values[2]
-            self.recursive = values[3]
-            self.quality = values[4]
-            self.rem_exif_data = values[5]
+            self.quality = values[3]
+            self.recursive = values[4]
         except:
             self.auto_orientation = True
             self.image.override_background_color(Gtk.StateType.NORMAL, Gdk.RGBA(0.0, 0.0, 0.0, 1.0))
             self.slide_delay = 5
-            self.recursive = False
             self.quality = 90
-            self.rem_exif_data = False
+            self.recursive = False
 
     def set_preferences(self, button):
         dialog = preferences.PrefsDialog(self)
@@ -206,12 +205,11 @@ class Imagewindow(Gtk.ApplicationWindow):
             self.auto_orientation = dialog.auto_orientation
             self.image.override_background_color(Gtk.StateType.NORMAL, dialog.color_button.get_rgba())
             self.slide_delay = dialog.choose_delay.get_value_as_int()
-            self.recursive = dialog.recursive
             self.quality = dialog.choose_quality.get_value_as_int()
-            self.rem_exif_data = dialog.rem_exif_data
+            self.recursive = dialog.recursive
             conf = preferences.Config()
-            conf.write_config(self.auto_orientation, dialog.color_button.get_rgba(), 
-                    self.slide_delay, self.recursive, self.quality, self.rem_exif_data)
+            conf.write_config(self.auto_orientation, dialog.color_button.get_rgba(),
+                    self.slide_delay, self.quality, self.recursive)
         dialog.destroy()
 
     def create_dict(self):
@@ -243,7 +241,7 @@ class Imagewindow(Gtk.ApplicationWindow):
         if self.slideshow_type:
             self.go_next_img(None)
         else:
-            self.filename = choice(self.filelist)
+            self.filename = random.choice(self.filelist)
             self.reload_img(None)
         return True
 
@@ -383,7 +381,6 @@ class Imagewindow(Gtk.ApplicationWindow):
         title = 'Please choose a file'
         file_action = Gtk.FileChooserAction.OPEN
         ok_icon = Gtk.STOCK_OPEN
-        filefilter = True
         filename = self.file_dialog(title, file_action, ok_icon, None, True)
         if not filename:
             return
@@ -410,17 +407,25 @@ class Imagewindow(Gtk.ApplicationWindow):
 
     def set_img_list(self, dirname):
         if self.recursive:
-            self.filelist = []
-            filelist = [[os.path.join(dirpath, filename) for filename in filenames 
-                if filename.endswith(self.readable_list)] 
-                for dirpath, dirnames, filenames in os.walk(dirname)]
-            [sublist.sort() for sublist in filelist]
-            self.filelist = [item for sublist in filelist for item in sublist]
+            name = 'rec/' + dirname
+            if name in self.app.listmanager:
+                self.filelist = self.app.listmanager[name]
+            else:
+                filelist = [[os.path.join(dirpath, filename) for filename in filenames
+                            if filename.lower().endswith(self.readable_list)]
+                            for dirpath, dirnames, filenames in os.walk(dirname)]
+                [sublist.sort() for sublist in filelist]
+                self.filelist = [item for sublist in filelist for item in sublist]
+                self.app.update_list_dict(self.filelist)
         else:
-            filelist = os.listdir(dirname)
-            self.filelist = [os.path.join(dirname, filename) for filename in filelist 
-                if filename.endswith(self.readable_list)]
-            self.filelist.sort()
+            if dirname in self.app.listmanager:
+                self.filelist = self.app.listmanager[dirname]
+            else:
+                filelist = os.listdir(dirname)
+                self.filelist = [os.path.join(dirname, filename) for filename in filelist
+                                if filename.lower().endswith(self.readable_list)]
+                self.filelist.sort()
+                self.app.update_list_dict(self.filelist)
         self.last_file = len(self.filelist) - 1
 
     def save_image(self, button):
@@ -445,10 +450,17 @@ class Imagewindow(Gtk.ApplicationWindow):
         if filetype == 'jpeg':
             option_list.append('quality'); value_list.append(str(self.quality))
         pixbuf.savev(filename, filetype, option_list, value_list)
+        exif = GExiv2.Metadata(self.filename)
+        if exif:
+            saved_exif = GExiv2.Metadata(filename)
+            for tag in exif.get_exif_tags():
+                saved_exif[tag] = exif[tag]
+            saved_exif.set_orientation(GExiv2.Orientation.NORMAL)
+            saved_exif.save_file()
         self.img_size = img_size
 
     def file_dialog(self, title, file_action, ok_icon, filename, filefilter=False, saving=False):
-        dialog = Gtk.FileChooserDialog(title, self, file_action, 
+        dialog = Gtk.FileChooserDialog(title, self, file_action,
             (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
              ok_icon, Gtk.ResponseType.OK))
         if filefilter:
@@ -526,6 +538,7 @@ class Imageapplication(Gtk.Application):
     def __init__(self):
         Gtk.Application.__init__(self, application_id='org.riverrun.Cheesemaker')
         self.set_flags(Gio.ApplicationFlags.HANDLES_OPEN)
+        self.create_list_dict()
 
     def do_open(self, files, n_files, hint):
         for name in files:
@@ -542,6 +555,13 @@ class Imageapplication(Gtk.Application):
         win = Imagewindow(self, filename)
         win.show_all()
         self.add_window(win)
+
+    def create_list_dict(self):
+        self.listmanager = {}
+
+    def update_list_dict(self, filelist):
+        name = filelist[0].rsplit('/', 1)[0]
+        self.listmanager[name] = filelist
 
     def close_win(self, window):
         if len(self.get_windows()) == 1:
