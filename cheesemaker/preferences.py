@@ -69,7 +69,7 @@ class PrefsDialog(Gtk.Dialog):
         box_1.set_border_width(16)
 
         self.auto_orientation = parent.auto_orientation
-        self.bg_color = Gdk.RGBA(0.0, 0.0, 0.0, 1.0)
+        self.bg_color = parent.bg_color
         self.slide_delay = parent.slide_delay
 
         self.set_orient_view(box_1)

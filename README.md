@@ -16,7 +16,6 @@ The preferences (automatic orientation, background color, slideshow time delay, 
 
 ### TODO
 
-* Maybe add a library option.
 * Put my feet up and relax.
 * Add some edit functions.
 * Take it easy for a while.

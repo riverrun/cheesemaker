@@ -101,7 +101,7 @@ class Imagewindow(Gtk.ApplicationWindow):
         self.slideshow_type = 'NextSlides'
 
         self.popup = uimanager.get_widget('/PopupMenu')
-        self.set_events(Gdk.EventMask.BUTTON_PRESS_MASK|Gdk.EventMask.STRUCTURE_MASK)
+        self.set_events(Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.STRUCTURE_MASK)
         self.connect('button-press-event', self.on_button_press)
 
         self.create_dict()
@@ -186,14 +186,15 @@ class Imagewindow(Gtk.ApplicationWindow):
             conf = preferences.Config()
             values = conf.read_config()
             self.auto_orientation = values[0]
-            self.image.override_background_color(Gtk.StateType.NORMAL,
-                    Gdk.RGBA(values[1][0], values[1][1], values[1][2], values[1][3]))
+            self.bg_color = Gdk.RGBA(values[1][0], values[1][1], values[1][2], values[1][3])
+            self.image.override_background_color(Gtk.StateType.NORMAL, self.bg_color)
             self.slide_delay = values[2]
             self.quality = values[3]
             self.recursive = values[4]
         except:
             self.auto_orientation = True
-            self.image.override_background_color(Gtk.StateType.NORMAL, Gdk.RGBA(0.0, 0.0, 0.0, 1.0))
+            self.bg_color = Gdk.RGBA(0.0, 0.0, 0.0, 1.0)
+            self.image.override_background_color(Gtk.StateType.NORMAL, self.bg_color)
             self.slide_delay = 5
             self.quality = 90
             self.recursive = False
@@ -203,7 +204,8 @@ class Imagewindow(Gtk.ApplicationWindow):
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
             self.auto_orientation = dialog.auto_orientation
-            self.image.override_background_color(Gtk.StateType.NORMAL, dialog.color_button.get_rgba())
+            self.bg_color = dialog.color_button.get_rgba()
+            self.image.override_background_color(Gtk.StateType.NORMAL, self.bg_color)
             self.slide_delay = dialog.choose_delay.get_value_as_int()
             self.quality = dialog.choose_quality.get_value_as_int()
             self.recursive = dialog.recursive
@@ -299,7 +301,7 @@ class Imagewindow(Gtk.ApplicationWindow):
         self.img_zoom(0.8)
 
     def img_zoom(self, zoomratio):
-        self.img_width, self.img_height = self.img_width*zoomratio, self.img_height*zoomratio
+        self.img_width, self.img_height = self.img_width * zoomratio, self.img_height * zoomratio
         self.pixbuf = self.modified_state()
         self.image.set_from_pixbuf(self.pixbuf)
 
@@ -407,25 +409,16 @@ class Imagewindow(Gtk.ApplicationWindow):
 
     def set_img_list(self, dirname):
         if self.recursive:
-            name = 'rec/' + dirname
-            if name in self.app.listmanager:
-                self.filelist = self.app.listmanager[name]
-            else:
-                filelist = [[os.path.join(dirpath, filename) for filename in filenames
-                            if filename.lower().endswith(self.readable_list)]
-                            for dirpath, dirnames, filenames in os.walk(dirname)]
-                [sublist.sort() for sublist in filelist]
-                self.filelist = [item for sublist in filelist for item in sublist]
-                self.app.update_list_dict(self.filelist)
+            filelist = [[os.path.join(dirpath, filename) for filename in filenames
+                        if filename.lower().endswith(self.readable_list)]
+                        for dirpath, dirnames, filenames in os.walk(dirname)]
+            [sublist.sort() for sublist in filelist]
+            self.filelist = [item for sublist in filelist for item in sublist]
         else:
-            if dirname in self.app.listmanager:
-                self.filelist = self.app.listmanager[dirname]
-            else:
-                filelist = os.listdir(dirname)
-                self.filelist = [os.path.join(dirname, filename) for filename in filelist
-                                if filename.lower().endswith(self.readable_list)]
-                self.filelist.sort()
-                self.app.update_list_dict(self.filelist)
+            filelist = os.listdir(dirname)
+            self.filelist = [os.path.join(dirname, filename) for filename in filelist
+                            if filename.lower().endswith(self.readable_list)]
+            self.filelist.sort()
         self.last_file = len(self.filelist) - 1
 
     def save_image(self, button):
@@ -471,7 +464,8 @@ class Imagewindow(Gtk.ApplicationWindow):
             dialog.set_current_name(filename)
             dialog.set_do_overwrite_confirmation(True)
         else:
-            dialog.set_current_folder(os.path.expanduser('~/Pictures'))
+            pics_dir = os.environ.get('XDG_PICTURES_DIR') or os.path.expanduser('~/Pictures')
+            dialog.set_current_folder(pics_dir)
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
             name = dialog.get_filename()
@@ -532,13 +526,12 @@ class Imagewindow(Gtk.ApplicationWindow):
         self.app.quit()
 
     def do_nothing(self, button):
-        pass
+        return
 
 class Imageapplication(Gtk.Application):
     def __init__(self):
         Gtk.Application.__init__(self, application_id='org.riverrun.Cheesemaker')
         self.set_flags(Gio.ApplicationFlags.HANDLES_OPEN)
-        self.create_list_dict()
 
     def do_open(self, files, n_files, hint):
         for name in files:
@@ -555,13 +548,6 @@ class Imageapplication(Gtk.Application):
         win = Imagewindow(self, filename)
         win.show_all()
         self.add_window(win)
-
-    def create_list_dict(self):
-        self.listmanager = {}
-
-    def update_list_dict(self, filelist):
-        name = filelist[0].rsplit('/', 1)[0]
-        self.listmanager[name] = filelist
 
     def close_win(self, window):
         if len(self.get_windows()) == 1:
