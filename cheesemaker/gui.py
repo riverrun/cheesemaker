@@ -21,7 +21,7 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, GLib, Gio, GExiv2
 import sys
 import os
 import random
-from . import preferences
+from . import preferences, editimage
 
 ui_info = """
 <ui>
@@ -39,6 +39,8 @@ ui_info = """
       <separator/>
       <menuitem action='FlipHoriz'/>
       <menuitem action='FlipVert'/>
+      <separator/>
+      <menuitem action='ResizeImg'/>
       <separator/>
       <menuitem action='Desaturate'/>
     </menu>
@@ -135,7 +137,8 @@ class Imagewindow(Gtk.ApplicationWindow):
             ('RotateRight', None, 'Rotate _right', '<Ctrl>Right', 'Rotate right', self.img_rotate_right),
             ('FlipHoriz', None, 'Flip _horizontally', '<Ctrl>H', 'Flip horizontally', self.img_flip_horiz),
             ('FlipVert', None, 'Flip _vertically', '<Ctrl>V', 'Flip vertically', self.img_flip_vert),
-            ('Prefs', None, 'Preferences', '<Ctrl>P', 'Preferences', self.set_preferences),
+            ('ResizeImg', None, 'Resi_ze image', None, 'Resize image', self.img_resize),
+            ('Prefs', None, '_Preferences', '<Ctrl>P', 'Preferences', self.set_preferences),
             ('ViewMenu', None, '_View'),
             ('NextImg', Gtk.STOCK_GO_FORWARD, '_Next image', '<Alt>Right', 'Go to next image', self.go_next_img),
             ('PrevImg', Gtk.STOCK_GO_BACK, '_Previous image', '<Alt>Left', 'Go to previous image', self.go_prev_img),
@@ -349,6 +352,20 @@ class Imagewindow(Gtk.ApplicationWindow):
         self.image.set_from_pixbuf(self.pixbuf)
         self.flipv = not self.flipv
 
+    def img_resize(self, button):
+        fileinfo = GdkPixbuf.Pixbuf.get_file_info(self.filename)[1:]
+        width, height = fileinfo[0], fileinfo[1]
+        dialog = editimage.ResizeDialog(self, width, height)
+        response = dialog.run()
+        if response == Gtk.ResponseType.OK:
+            new_width = dialog.choose_width.get_value_as_int()
+            new_height = dialog.choose_height.get_value_as_int()
+        else:
+            dialog.destroy()
+            return
+        dialog.destroy()
+        self.save_image(None, (new_width, new_height))
+
     def modified_state(self):
         if self.img_size == 'Zoomfit':
             if self.mod_state % 2:
@@ -421,7 +438,7 @@ class Imagewindow(Gtk.ApplicationWindow):
             self.filelist.sort()
         self.last_file = len(self.filelist) - 1
 
-    def save_image(self, button):
+    def save_image(self, button, new_coords=None):
         filetype = GdkPixbuf.Pixbuf.get_file_info(self.filename)[0].get_name()
         name = self.filename.rsplit('/', 1)[1]
         if filetype in self.writable_list:
@@ -442,6 +459,8 @@ class Imagewindow(Gtk.ApplicationWindow):
         option_list, value_list = [], []
         if filetype == 'jpeg':
             option_list.append('quality'); value_list.append(str(self.quality))
+        if new_coords:
+            pixbuf = pixbuf.scale_simple(new_coords[0], new_coords[1], GdkPixbuf.InterpType.HYPER)
         pixbuf.savev(filename, filetype, option_list, value_list)
         exif = GExiv2.Metadata(self.filename)
         if exif:

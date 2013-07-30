@@ -18,12 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with cheesemaker.  If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-import os
 from distutils.core import setup
 
 setup(
     name = 'cheesemaker',
-    version = '0.2.3',
+    version = '0.2.4',
     packages = ['cheesemaker'],
     scripts = ['bin/cheesemaker'],
     data_files = [
