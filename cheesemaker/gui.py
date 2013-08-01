@@ -42,6 +42,8 @@ ui_info = """
       <separator/>
       <menuitem action='ResizeImg'/>
       <separator/>
+      <menuitem action='CropImg'/>
+      <separator/>
       <menuitem action='Desaturate'/>
     </menu>
     <separator/>
@@ -138,6 +140,7 @@ class Imagewindow(Gtk.ApplicationWindow):
             ('FlipHoriz', None, 'Flip _horizontally', '<Ctrl>H', 'Flip horizontally', self.img_flip_horiz),
             ('FlipVert', None, 'Flip _vertically', '<Ctrl>V', 'Flip vertically', self.img_flip_vert),
             ('ResizeImg', None, 'Resi_ze image', None, 'Resize image', self.img_resize),
+            ('CropImg', None, '_Crop image', None, 'Crop image', self.img_crop),
             ('Prefs', None, '_Preferences', '<Ctrl>P', 'Preferences', self.set_preferences),
             ('ViewMenu', None, '_View'),
             ('NextImg', Gtk.STOCK_GO_FORWARD, '_Next image', '<Alt>Right', 'Go to next image', self.go_next_img),
@@ -365,6 +368,23 @@ class Imagewindow(Gtk.ApplicationWindow):
             return
         dialog.destroy()
         self.save_image(None, (new_width, new_height))
+
+    def img_crop(self, button):
+        fileinfo = GdkPixbuf.Pixbuf.get_file_info(self.filename)[1:]
+        width, height = fileinfo[0], fileinfo[1]
+        dialog = editimage.CropDialog(self, width, height)
+        response = dialog.run()
+        if response == Gtk.ResponseType.OK:
+            x = dialog.choose_x.get_value_as_int()
+            y = dialog.choose_y.get_value_as_int()
+            new_width = dialog.choose_width.get_value_as_int()
+            new_height = dialog.choose_height.get_value_as_int()
+        else:
+            dialog.destroy()
+            return
+        dialog.destroy()
+        self.pixbuf = self.pixbuf.new_subpixbuf(x, y, new_width, new_height)
+        self.image.set_from_pixbuf(self.pixbuf)
 
     def modified_state(self):
         if self.img_size == 'Zoomfit':

@@ -88,15 +88,18 @@ class PrefsDialog(Gtk.Dialog):
 
         self.show_all()
 
+    def bool_view(self, box, title_name, spinb, func, bool_value):
+        title = Gtk.Label()
+        box.pack_start(title, True, True, 0)
+        title.set_markup('<b>' + title_name + '</b>')
+        title.set_halign(Gtk.Align.START)
+        box.pack_start(spinb, True, True, 0)
+        spinb.connect('toggled', func)
+        spinb.set_active(bool_value)
+
     def set_orient_view(self, box):
-        orient_title = Gtk.Label()
-        box.pack_start(orient_title, True, True, 0)
-        orient_button = Gtk.CheckButton('Automatic orientation using image data')
-        box.pack_start(orient_button, True, True, 0)
-        orient_title.set_markup('<b>Orientation</b>')
-        orient_title.set_halign(Gtk.Align.START)
-        orient_button.connect('toggled', self.auto_orient)
-        orient_button.set_active(self.auto_orientation)
+        spinb = Gtk.CheckButton('Automatic orientation using image data')
+        self.bool_view(box, 'Orientation', spinb, self.auto_orient, self.auto_orientation)
 
     def set_color_view(self, box):
         color_title = Gtk.Label()
@@ -112,53 +115,41 @@ class PrefsDialog(Gtk.Dialog):
         self.color_button = Gtk.ColorButton()
         color_box.pack_start(self.color_button, True, True, 0)
 
-    def set_delay_view(self, box):
-        slide_delay_title = Gtk.Label()
-        box.pack_start(slide_delay_title, True, True, 0)
-        slide_delay_box = Gtk.Box()
-        box.pack_start(slide_delay_box, True, True, 0)
-        slide_delay_title.set_markup('<b>Slideshow</b>')
-        slide_delay_title.set_halign(Gtk.Align.START)
-        slide_delay_label = Gtk.Label('Time between images')
-        slide_delay_label.set_halign(Gtk.Align.START)
-        slide_delay_box.pack_start(slide_delay_label, True, True, 0)
+    def spinb_view(self, box, title_name, label_name, def_adj, min_adj, max_adj, step, spinb):
+        title = Gtk.Label()
+        box.pack_start(title, True, True, 0)
+        title.set_markup('<b>' + title_name + '</b>')
+        title.set_halign(Gtk.Align.START)
+        subbox = Gtk.Box()
+        box.pack_start(subbox, True, True, 0)
+        label = Gtk.Label()
+        label.set_markup(label_name)
+        label.set_halign(Gtk.Align.START)
+        subbox.pack_start(label, True, True, 0)
 
-        adjustment = Gtk.Adjustment(self.slide_delay, 1, 50, 1, 10, 0)
+        adjustment = Gtk.Adjustment(def_adj, min_adj, max_adj, step, 10, 0)
+        spinb.set_adjustment(adjustment)
+        spinb.set_update_policy(Gtk.SpinButtonUpdatePolicy.IF_VALID)
+        subbox.pack_start(spinb, True, True, 0)
+
+    def set_delay_view(self, box):
         self.choose_delay = Gtk.SpinButton()
-        self.choose_delay.set_adjustment(adjustment)
-        self.choose_delay.set_update_policy(Gtk.SpinButtonUpdatePolicy.IF_VALID)
-        self.choose_delay.set_tooltip_text('Choose the time between images')
-        slide_delay_box.pack_start(self.choose_delay, True, True, 0)
+        t_name = 'Slideshow'
+        l_name = 'Time between images'
+        self.spinb_view(box, t_name, l_name, self.slide_delay, 1, 50, 1, self.choose_delay)
 
     def auto_orient(self, button):
         self.auto_orientation = button.get_active()
 
     def set_quality_view(self, box):
-        quality_title = Gtk.Label()
-        box.pack_start(quality_title, True, True, 0)
-        quality_box = Gtk.Box()
-        box.pack_start(quality_box, True, True, 0)
-        quality_title.set_markup('<b>Jpeg quality</b>')
-        quality_title.set_halign(Gtk.Align.START)
-        quality_label = Gtk.Label('Quality of saved Jpeg images')
-        quality_label.set_halign(Gtk.Align.START)
-        quality_box.pack_start(quality_label, True, True, 0)
-
-        adjustment = Gtk.Adjustment(self.quality, 25, 100, 5, 10, 0)
         self.choose_quality = Gtk.SpinButton()
-        self.choose_quality.set_adjustment(adjustment)
-        self.choose_quality.set_update_policy(Gtk.SpinButtonUpdatePolicy.IF_VALID)
-        quality_box.pack_start(self.choose_quality, True, True, 0)
+        t_name = 'Jpeg quality'
+        l_name = 'Quality of saved Jpeg images'
+        self.spinb_view(box, t_name, l_name, self.quality, 25, 100, 5, self.choose_quality)
 
     def set_subdir_view(self, box):
-        subdir_title = Gtk.Label()
-        box.pack_start(subdir_title, True, True, 0)
-        subdir_button = Gtk.CheckButton('Include images in subfolders')
-        box.pack_start(subdir_button, True, True, 0)
-        subdir_title.set_markup('<b>Show subfolders</b>')
-        subdir_title.set_halign(Gtk.Align.START)
-        subdir_button.connect('toggled', self.subdir)
-        subdir_button.set_active(self.recursive)
+        spinb = Gtk.CheckButton('Include images in subfolders')
+        self.bool_view(box, 'Show subfolders', spinb, self.subdir, self.recursive)
 
     def subdir(self, button):
         self.recursive = button.get_active()
