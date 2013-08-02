@@ -35,7 +35,7 @@ class ResizeDialog(Gtk.Dialog):
         self.set_aspratio_view(resize_box)
         self.show_all()
 
-    def spinb_view(self, box, name, def_adj, max_adj, spinb):
+    def spinb_view(self, box, name, spinb, adjustment):
         subbox = Gtk.Box()
         box.pack_start(subbox, True, True, 0)
         label = Gtk.Label()
@@ -43,14 +43,14 @@ class ResizeDialog(Gtk.Dialog):
         label.set_halign(Gtk.Align.START)
         subbox.pack_start(label, True, True, 0)
 
-        adjustment = Gtk.Adjustment(def_adj, 0, max_adj, 1, 10, 0)
         spinb.set_adjustment(adjustment)
         spinb.set_update_policy(Gtk.SpinButtonUpdatePolicy.IF_VALID)
         subbox.pack_start(spinb, True, True, 0)
 
     def set_resize_view(self, box, width, height):
         self.choose_width = Gtk.SpinButton()
-        self.spinb_view(box, 'Width', width, width, self.choose_width)
+        adjustment = Gtk.Adjustment(width, 0, width, 1, 10, 0)
+        self.spinb_view(box, 'Width', self.choose_width, adjustment)
         self.width_signal = self.choose_width.connect('value-changed', self.width_changed)
 
         self.choose_height = Gtk.SpinButton()
@@ -87,32 +87,53 @@ class CropDialog(ResizeDialog):
             (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
              Gtk.STOCK_OK, Gtk.ResponseType.OK))
 
-        self.set_default_size(250, 200)
+        self.width = width
+        self.height = height
+        self.set_default_size(300, 200)
         box = self.get_content_area()
         box.set_border_width(16)
         crop_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         box.pack_start(crop_box, True, True, 0)
-        self.set_xy_view(crop_box, width, height)
-        self.set_resize_view(crop_box, width, height)
+        self.set_crop_view(crop_box)
         self.show_all()
 
-    def set_xy_view(self, box, width, height):
-        self.choose_x = Gtk.SpinButton()
-        self.spinb_view(box, 'X', 0, width, self.choose_x)
-        self.x_signal = self.choose_x.connect('value-changed', self.x_changed)
+    def set_crop_view(self, box):
+        self.choose_lx = Gtk.SpinButton()
+        self.lx_adj = Gtk.Adjustment(0, 0, self.width - 1, 1, 10, 0)
+        self.spinb_view(box, 'Distance from the left', self.choose_lx, self.lx_adj)
+        self.lx_signal = self.choose_lx.connect('value-changed', self.lx_changed)
 
-        self.choose_y = Gtk.SpinButton()
-        self.spinb_view(box, 'Y', 0, height, self.choose_y)
-        self.y_signal = self.choose_y.connect('value-changed', self.y_changed)
+        self.choose_rx = Gtk.SpinButton()
+        self.rx_adj = Gtk.Adjustment(0, 0, self.width - 1, 1, 10, 0)
+        self.spinb_view(box, 'Distance from the right', self.choose_rx, self.rx_adj)
+        self.rx_signal = self.choose_rx.connect('value-changed', self.rx_changed)
 
-    def width_changed(self, spinb):
-        pass
+        self.choose_ty = Gtk.SpinButton()
+        self.ty_adj = Gtk.Adjustment(0, 0, self.height - 1, 1, 10, 0)
+        self.spinb_view(box, 'Distance from the top', self.choose_ty, self.ty_adj)
+        self.ty_signal = self.choose_ty.connect('value-changed', self.ty_changed)
 
-    def height_changed(self, spinb):
-        pass
+        self.choose_by = Gtk.SpinButton()
+        self.by_adj = Gtk.Adjustment(0, 0, self.height - 1, 1, 10, 0)
+        self.spinb_view(box, 'Distance from the bottom', self.choose_by, self.by_adj)
+        self.by_signal = self.choose_by.connect('value-changed', self.by_changed)
 
-    def x_changed(self, spinb):
-        pass
+    def lx_changed(self, spinb):
+        lx = self.choose_lx.get_value_as_int() + 1
+        upper = self.width - lx
+        self.rx_adj.set_upper(upper)
 
-    def y_changed(self, spinb):
-        pass
+    def rx_changed(self, spinb):
+        rx = self.choose_rx.get_value_as_int() + 1
+        upper = self.width - rx
+        self.lx_adj.set_upper(upper)
+
+    def ty_changed(self, spinb):
+        ty = self.choose_ty.get_value_as_int() + 1
+        upper = self.height - ty
+        self.by_adj.set_upper(upper)
+
+    def by_changed(self, spinb):
+        by = self.choose_by.get_value_as_int() + 1
+        upper = self.height - by
+        self.ty_adj.set_upper(upper)

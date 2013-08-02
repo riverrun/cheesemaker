@@ -375,16 +375,23 @@ class Imagewindow(Gtk.ApplicationWindow):
         dialog = editimage.CropDialog(self, width, height)
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
-            x = dialog.choose_x.get_value_as_int()
-            y = dialog.choose_y.get_value_as_int()
-            new_width = dialog.choose_width.get_value_as_int()
-            new_height = dialog.choose_height.get_value_as_int()
+            lx = dialog.choose_lx.get_value_as_int()
+            rx = dialog.choose_rx.get_value_as_int()
+            ty = dialog.choose_ty.get_value_as_int()
+            by = dialog.choose_by.get_value_as_int()
         else:
             dialog.destroy()
             return
         dialog.destroy()
-        self.pixbuf = self.pixbuf.new_subpixbuf(x, y, new_width, new_height)
-        self.image.set_from_pixbuf(self.pixbuf)
+        new_width = width - (lx + rx)
+        new_height = height - (ty + by)
+        img_size = self.img_size
+        self.img_size = 'Zoom1to1'
+        pixbuf = self.modified_state()
+        pixbuf = pixbuf.new_subpixbuf(lx, ty, new_width, new_height)
+        pixbuf = pixbuf.scale_simple(self.img_width, self.img_height, GdkPixbuf.InterpType.HYPER)
+        self.image.set_from_pixbuf(pixbuf)
+        self.img_size = img_size
 
     def modified_state(self):
         if self.img_size == 'Zoomfit':
