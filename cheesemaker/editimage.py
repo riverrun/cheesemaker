@@ -48,14 +48,15 @@ class ResizeDialog(Gtk.Dialog):
         subbox.pack_start(spinb, True, True, 0)
 
     def set_resize_view(self, box, width, height):
-        self.choose_width = Gtk.SpinButton()
-        adjustment = Gtk.Adjustment(width, 0, width, 1, 10, 0)
-        self.spinb_view(box, 'Width', self.choose_width, adjustment)
-        self.width_signal = self.choose_width.connect('value-changed', self.width_changed)
+        self.get_width = Gtk.SpinButton()
+        wadj = Gtk.Adjustment(width, 0, width, 1, 10, 0)
+        self.spinb_view(box, 'Width', self.get_width, wadj)
+        self.width_signal = self.get_width.connect('value-changed', self.width_changed)
 
-        self.choose_height = Gtk.SpinButton()
-        self.spinb_view(box, 'Height', height, height, self.choose_height)
-        self.height_signal = self.choose_height.connect('value-changed', self.height_changed)
+        self.get_height = Gtk.SpinButton()
+        hadj = Gtk.Adjustment(height, 0, height, 1, 10, 0)
+        self.spinb_view(box, 'Height', self.get_height, hadj)
+        self.height_signal = self.get_height.connect('value-changed', self.height_changed)
 
     def set_aspratio_view(self, box):
         self.pres_aspratio = True
@@ -65,30 +66,38 @@ class ResizeDialog(Gtk.Dialog):
         aspratio.set_active(self.pres_aspratio)
 
     def width_changed(self, spinb):
-        width = self.choose_width.get_value_as_int()
+        width = self.get_width.get_value_as_int()
         if self.pres_aspratio:
             height = width / self.ratio
-            with self.choose_height.handler_block(self.height_signal):
-                self.choose_height.set_value(int(height))
+            with self.get_height.handler_block(self.height_signal):
+                self.get_height.set_value(int(height))
 
     def height_changed(self, spinb):
-        height = self.choose_height.get_value_as_int()
+        height = self.get_height.get_value_as_int()
         if self.pres_aspratio:
             width = height * self.ratio
-            with self.choose_width.handler_block(self.width_signal):
-                self.choose_width.set_value(int(width))
+            with self.get_width.handler_block(self.width_signal):
+                self.get_width.set_value(int(width))
 
     def toggle_aspratio(self, button):
         self.pres_aspratio = button.get_active()
 
 class CropDialog(ResizeDialog):
-    def __init__(self, parent, width, height):
+    def __init__(self, parent, width, height, pixwidth, pixheight, xoffset, yoffset):
         Gtk.Dialog.__init__(self, 'Crop image', parent, 0,
             (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
              Gtk.STOCK_OK, Gtk.ResponseType.OK))
 
+        self.image = parent.image
+        self.draw_signal = self.image.connect_after('draw', self.on_draw)
         self.width = width
         self.height = height
+        self.pixwidth = pixwidth
+        self.pixheight = pixheight
+        self.ratio = self.width / self.pixwidth
+        self.xoffset = xoffset
+        self.yoffset = yoffset
+
         self.set_default_size(300, 200)
         box = self.get_content_area()
         box.set_border_width(16)
@@ -98,42 +107,56 @@ class CropDialog(ResizeDialog):
         self.show_all()
 
     def set_crop_view(self, box):
-        self.choose_lx = Gtk.SpinButton()
-        self.lx_adj = Gtk.Adjustment(0, 0, self.width - 1, 1, 10, 0)
-        self.spinb_view(box, 'Distance from the left', self.choose_lx, self.lx_adj)
-        self.lx_signal = self.choose_lx.connect('value-changed', self.lx_changed)
+        self.get_lx = Gtk.SpinButton()
+        self.lx_adj = Gtk.Adjustment(0, 0, self.width - 1, 10, 100, 0)
+        self.spinb_view(box, 'Distance from the left', self.get_lx, self.lx_adj)
+        self.lx_signal = self.get_lx.connect('value-changed', self.lx_changed)
 
-        self.choose_rx = Gtk.SpinButton()
-        self.rx_adj = Gtk.Adjustment(0, 0, self.width - 1, 1, 10, 0)
-        self.spinb_view(box, 'Distance from the right', self.choose_rx, self.rx_adj)
-        self.rx_signal = self.choose_rx.connect('value-changed', self.rx_changed)
+        self.get_rx = Gtk.SpinButton()
+        self.rx_adj = Gtk.Adjustment(0, 0, self.width - 1, 10, 100, 0)
+        self.spinb_view(box, 'Distance from the right', self.get_rx, self.rx_adj)
+        self.rx_signal = self.get_rx.connect('value-changed', self.rx_changed)
 
-        self.choose_ty = Gtk.SpinButton()
-        self.ty_adj = Gtk.Adjustment(0, 0, self.height - 1, 1, 10, 0)
-        self.spinb_view(box, 'Distance from the top', self.choose_ty, self.ty_adj)
-        self.ty_signal = self.choose_ty.connect('value-changed', self.ty_changed)
+        self.get_ty = Gtk.SpinButton()
+        self.ty_adj = Gtk.Adjustment(0, 0, self.height - 1, 10, 100, 0)
+        self.spinb_view(box, 'Distance from the top', self.get_ty, self.ty_adj)
+        self.ty_signal = self.get_ty.connect('value-changed', self.ty_changed)
 
-        self.choose_by = Gtk.SpinButton()
-        self.by_adj = Gtk.Adjustment(0, 0, self.height - 1, 1, 10, 0)
-        self.spinb_view(box, 'Distance from the bottom', self.choose_by, self.by_adj)
-        self.by_signal = self.choose_by.connect('value-changed', self.by_changed)
+        self.get_by = Gtk.SpinButton()
+        self.by_adj = Gtk.Adjustment(0, 0, self.height - 1, 10, 100, 0)
+        self.spinb_view(box, 'Distance from the bottom', self.get_by, self.by_adj)
+        self.by_signal = self.get_by.connect('value-changed', self.by_changed)
 
     def lx_changed(self, spinb):
-        lx = self.choose_lx.get_value_as_int() + 1
+        lx = self.get_lx.get_value_as_int() + 1
         upper = self.width - lx
         self.rx_adj.set_upper(upper)
+        self.image.queue_draw()
 
     def rx_changed(self, spinb):
-        rx = self.choose_rx.get_value_as_int() + 1
+        rx = self.get_rx.get_value_as_int() + 1
         upper = self.width - rx
         self.lx_adj.set_upper(upper)
+        self.image.queue_draw()
 
     def ty_changed(self, spinb):
-        ty = self.choose_ty.get_value_as_int() + 1
+        ty = self.get_ty.get_value_as_int() + 1
         upper = self.height - ty
         self.by_adj.set_upper(upper)
+        self.image.queue_draw()
 
     def by_changed(self, spinb):
-        by = self.choose_by.get_value_as_int() + 1
+        by = self.get_by.get_value_as_int() + 1
         upper = self.height - by
         self.ty_adj.set_upper(upper)
+        self.image.queue_draw()
+
+    def on_draw(self, win, cr):
+        x = (self.get_lx.get_value_as_int() / self.ratio)
+        y = (self.get_ty.get_value_as_int() / self.ratio)
+        width = self.pixwidth - (x + (self.get_rx.get_value_as_int() / self.ratio))
+        height = self.pixheight - (y + (self.get_by.get_value_as_int() / self.ratio))
+        cr.set_source_rgb(1.0, 0.0, 0.0)
+        cr.rectangle(x + self.xoffset, y + self.yoffset, width, height)
+        cr.set_line_width(1)
+        cr.stroke()

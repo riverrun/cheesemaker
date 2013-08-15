@@ -125,7 +125,7 @@ class Imagewindow(Gtk.ApplicationWindow):
             else:
                 title = 'Cannot open ' + filename
                 message = 'Sorry, we cannot open ' + filename
-                self.error_dialog(title, message)
+                self.message_dialog(Gtk.MessageType.ERROR, Gtk.ButtonsType.CLOSE, title, message)
 
     def actions(self, action_group):
         action_group.add_actions([
@@ -212,8 +212,8 @@ class Imagewindow(Gtk.ApplicationWindow):
             self.auto_orientation = dialog.auto_orientation
             self.bg_color = dialog.color_button.get_rgba()
             self.image.override_background_color(Gtk.StateType.NORMAL, self.bg_color)
-            self.slide_delay = dialog.choose_delay.get_value_as_int()
-            self.quality = dialog.choose_quality.get_value_as_int()
+            self.slide_delay = dialog.get_delay.get_value_as_int()
+            self.quality = dialog.get_quality.get_value_as_int()
             self.recursive = dialog.recursive
             conf = preferences.Config()
             conf.write_config(self.auto_orientation, dialog.color_button.get_rgba(),
@@ -236,7 +236,7 @@ class Imagewindow(Gtk.ApplicationWindow):
             self.fullscreen()
             cursor = Gdk.Cursor.new(Gdk.CursorType.BLANK_CURSOR)
             self.get_window().set_cursor(cursor)
-            self.slide_cookie = self.app.inhibit(self, Gtk.ApplicationInhibitFlags.IDLE, 'Disable slideshow')
+            self.slide_cookie = self.app.inhibit(self, Gtk.ApplicationInhibitFlags.IDLE, 'Disable screensaver')
             self.timer_delay = GLib.timeout_add_seconds(self.slide_delay, self.start_slideshow)
         else:
             self.app.uninhibit(self.slide_cookie)
@@ -361,8 +361,8 @@ class Imagewindow(Gtk.ApplicationWindow):
         dialog = editimage.ResizeDialog(self, width, height)
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
-            new_width = dialog.choose_width.get_value_as_int()
-            new_height = dialog.choose_height.get_value_as_int()
+            new_width = dialog.get_width.get_value_as_int()
+            new_height = dialog.get_height.get_value_as_int()
         else:
             dialog.destroy()
             return
@@ -370,27 +370,41 @@ class Imagewindow(Gtk.ApplicationWindow):
         self.save_image(None, (new_width, new_height))
 
     def img_crop(self, button):
-        fileinfo = GdkPixbuf.Pixbuf.get_file_info(self.filename)[1:]
-        width, height = fileinfo[0], fileinfo[1]
-        dialog = editimage.CropDialog(self, width, height)
+        fileinfo = GdkPixbuf.Pixbuf.get_file_info(self.filename)
+        if self.mod_state % 2:
+            height, width = fileinfo[1], fileinfo[2]
+        else:
+            width, height = fileinfo[1], fileinfo[2]
+        pixwidth = self.pixbuf.get_width()
+        pixheight = self.pixbuf.get_height()
+        xoffset = (self.win_width - pixwidth) / 2
+        yoffset = (self.win_height - pixheight) / 2
+        dialog = editimage.CropDialog(self, width, height, pixwidth, pixheight, xoffset, yoffset)
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
-            lx = dialog.choose_lx.get_value_as_int()
-            rx = dialog.choose_rx.get_value_as_int()
-            ty = dialog.choose_ty.get_value_as_int()
-            by = dialog.choose_by.get_value_as_int()
+            lx = dialog.get_lx.get_value_as_int()
+            rx = dialog.get_rx.get_value_as_int()
+            ty = dialog.get_ty.get_value_as_int()
+            by = dialog.get_by.get_value_as_int()
         else:
+            self.image.handler_disconnect(dialog.draw_signal)
             dialog.destroy()
             return
+        self.image.handler_disconnect(dialog.draw_signal)
         dialog.destroy()
         new_width = width - (lx + rx)
         new_height = height - (ty + by)
         img_size = self.img_size
         self.img_size = 'Zoom1to1'
         pixbuf = self.modified_state()
-        pixbuf = pixbuf.new_subpixbuf(lx, ty, new_width, new_height)
-        pixbuf = pixbuf.scale_simple(self.img_width, self.img_height, GdkPixbuf.InterpType.HYPER)
+        subpixbuf = pixbuf.new_subpixbuf(lx, ty, new_width, new_height)
+        pixbuf = self.scale_img(subpixbuf, new_width, new_height)
         self.image.set_from_pixbuf(pixbuf)
+        title = 'Save cropped image'
+        message = 'Do you want to save this cropped image?'
+        response = self.message_dialog(Gtk.MessageType.QUESTION, Gtk.ButtonsType.YES_NO, title, message)
+        if response == -8:
+            self.save_image(None, subpixbuf)
         self.img_size = img_size
 
     def modified_state(self):
@@ -422,6 +436,16 @@ class Imagewindow(Gtk.ApplicationWindow):
         self.flipv = False
         self.grays = False
         self.graybutton.set_active(False)
+
+    def scale_img(self, pixbuf, img_width, img_height):
+        x = img_width / self.win_width
+        y = img_height / self.win_height
+        if x < 1 and y < 1:
+            return pixbuf
+        scaleratio = x if x > y else y
+        width = img_width / scaleratio
+        height = img_height / scaleratio
+        return pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.HYPER)
 
     def open_image(self, button):
         title = 'Please choose a file'
@@ -465,7 +489,7 @@ class Imagewindow(Gtk.ApplicationWindow):
             self.filelist.sort()
         self.last_file = len(self.filelist) - 1
 
-    def save_image(self, button, new_coords=None):
+    def save_image(self, button, pixbuf=None, new_coords=None):
         filetype = GdkPixbuf.Pixbuf.get_file_info(self.filename)[0].get_name()
         name = self.filename.rsplit('/', 1)[1]
         if filetype in self.writable_list:
@@ -478,11 +502,12 @@ class Imagewindow(Gtk.ApplicationWindow):
         else:
             title = 'Cannot save ' + name
             message = 'Sorry, we cannot save ' + filetype + ' images'
-            self.error_dialog(title, message)
+            self.message_dialog(Gtk.MessageType.ERROR, Gtk.ButtonsType.CLOSE, title, message)
             return
         img_size = self.img_size
         self.img_size = 'Zoom1to1'
-        pixbuf = self.modified_state()
+        if not pixbuf:
+            pixbuf = self.modified_state()
         option_list, value_list = [], []
         if filetype == 'jpeg':
             option_list.append('quality'); value_list.append(str(self.quality))
@@ -521,12 +546,13 @@ class Imagewindow(Gtk.ApplicationWindow):
         dialog.destroy()
         return name
 
-    def error_dialog(self, title, message):
-        dialog = Gtk.MessageDialog(self, 0, Gtk.MessageType.ERROR,
-                Gtk.ButtonsType.CLOSE, message)
+    def message_dialog(self, message_type, buttons_type, title, message):
+        dialog = Gtk.MessageDialog(self, 0, message_type,
+                buttons_type, message)
         dialog.set_title(title)
-        dialog.run()
+        response = dialog.run()
         dialog.destroy()
+        return response
 
     def on_button_press(self, widget, event):
         if event.button == 1:

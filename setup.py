@@ -16,13 +16,13 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with cheesemaker.  If not, see <http://www.gnu.org/licenses/gpl.html>.
+# along with Cheesemaker.  If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 from distutils.core import setup
 
 setup(
     name = 'cheesemaker',
-    version = '0.2.4',
+    version = '0.2.5',
     packages = ['cheesemaker'],
     scripts = ['bin/cheesemaker'],
     data_files = [

@@ -133,19 +133,19 @@ class PrefsDialog(Gtk.Dialog):
         subbox.pack_start(spinb, True, True, 0)
 
     def set_delay_view(self, box):
-        self.choose_delay = Gtk.SpinButton()
+        self.get_delay = Gtk.SpinButton()
         t_name = 'Slideshow'
         l_name = 'Time between images'
-        self.spinb_view(box, t_name, l_name, self.slide_delay, 1, 50, 1, self.choose_delay)
+        self.spinb_view(box, t_name, l_name, self.slide_delay, 1, 50, 1, self.get_delay)
 
     def auto_orient(self, button):
         self.auto_orientation = button.get_active()
 
     def set_quality_view(self, box):
-        self.choose_quality = Gtk.SpinButton()
+        self.get_quality = Gtk.SpinButton()
         t_name = 'Jpeg quality'
         l_name = 'Quality of saved Jpeg images'
-        self.spinb_view(box, t_name, l_name, self.quality, 25, 100, 5, self.choose_quality)
+        self.spinb_view(box, t_name, l_name, self.quality, 25, 100, 5, self.get_quality)
 
     def set_subdir_view(self, box):
         spinb = Gtk.CheckButton('Include images in subfolders')
@@ -194,7 +194,7 @@ class AboutDialog(Gtk.AboutDialog):
         'along with Cheesemaker. If not, see http://www.gnu.org/licenses/gpl.html')
 
         self.set_program_name('Cheesemaker')
-        self.set_version('0.2.4')
+        self.set_version('0.2.5')
         self.set_license(license)
         self.set_wrap_license(True)
         self.set_comments('A simple image viewer.')
