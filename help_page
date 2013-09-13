@@ -1,54 +1,54 @@
-<span font="sans bold 14">Cheesemaker</span>
-<span font="serif 11">Cheesemaker is a simple image viewer.</span>
+Cheesemaker
+Cheesemaker is a simple image viewer.
 
-<span font="sans bold 12">Features</span>
-<span font="serif 11">Cheesemaker supports zoom, rotating and flipping images, automatic orientation, multiple windows, saving images, resizing and cropping images, fullscreen view and a slideshow.</span>
+Features
+Cheesemaker supports zoom, rotating and flipping images, automatic orientation, multiple windows, saving images, resizing and cropping images, fullscreen view and a slideshow.
 
-<span font="sans bold 12">General use</span>
-<span font="serif 11">Cheesemaker has no menubar or toolbar, but you can access the menu by right-clicking on the window. There are also keyboard shortcuts for most actions. In addition, you can now access some functions by clicking on different parts of the window. For example, left-clicking on the right side of the image window will take you to the next image in the list. All these mouse shortcuts are listed below.</span>
+General use
+Cheesemaker has no menubar or toolbar, but you can access the menu by right-clicking on the window. There are also keyboard shortcuts for most actions. In addition, you can now access some functions by clicking on different parts of the window. For example, left-clicking on the right side of the image window will take you to the next image in the list. All these mouse shortcuts are listed below.
 
-<span font="sans bold 12">Slideshow</span>
-<span font="serif 11">While the slideshow is running, the cursor will be hidden, but you can open the popup menu by right-clicking on the window.
-With the slideshow, the images can be viewed at random or in order. This option can even be changed while the slideshow is running. There is also an option, in the preferences section, to change the time delay between images. While the slideshow is running, the screensaver will be disabled.</span>
+Slideshow
+While the slideshow is running, the cursor will be hidden, but you can open the popup menu by right-clicking on the window.
+With the slideshow, the images can be viewed at random or in order. This option can even be changed while the slideshow is running. There is also an option, in the preferences section, to change the time delay between images. While the slideshow is running, the screensaver will be disabled.
 
-<span font="sans bold 12">Saving an image</span>
-<span font="serif 11">There is an option to save images, and for jpeg images you can adjust the default quality in the preferences section. If there is any image (exif) data, it will be saved, but the orientation data will be rewritten. This is so that the image appears with the orientation with which you saved it. None of the changes you make to images are automatically saved, and all the changes are lost when you go to another image or reload the same image.</span>
+Saving an image
+There is an option to save images, and for jpeg images you can adjust the default quality in the preferences section. If there is any image (exif) data, it will be saved, but the orientation data will be rewritten. This is so that the image appears with the orientation with which you saved it. None of the changes you make to images are automatically saved, and all the changes are lost when you go to another image or reload the same image.
 
-<span font="sans bold 12">Preferences</span>
-<span font="serif 11">In addition to the save options and the option to change the time delay for the slideshow, you can also change the background color and enable, or disable, automatic orientation. There is an option to include images in subfolders in the list of images you can open when you go to the previous, or next, image. Any changes you make to the preferences are saved for the next time you use Cheesemaker.</span>
+Preferences
+In addition to the save options and the option to change the time delay for the slideshow, you can also change the background color and enable, or disable, automatic orientation. There is an option to include images in subfolders in the list of images you can open when you go to the previous, or next, image. Any changes you make to the preferences are saved for the next time you use Cheesemaker.
 
-<span font="sans bold 12">Mouse shortcuts</span>
-    <span font="serif bold 11">Click near the right edge</span>    <span font="serif 11">Go to next image</span>
-    <span font="serif bold 11">Ctrl + click near the right edge</span>    <span font="serif 11">Rotate the image to the right</span>
-    <span font="serif bold 11">Click near the left edge</span>    <span font="serif 11">Go to previous image</span>
-    <span font="serif bold 11">Ctrl + click near the left edge</span>    <span font="serif 11">Rotate the image to the left</span>
+Mouse shortcuts
+    Click near the right edge    Go to next image
+    Ctrl + click near the right edge    Rotate the image to the right
+    Click near the left edge    Go to previous image
+    Ctrl + click near the left edge    Rotate the image to the left
 
-<span font="sans bold 12">Keyboard shortcuts</span>
-<span font="sans bold 11">General</span>
-    <span font="serif bold 11">Ctrl + O</span>    <span font="serif 11">Open an image</span>
-    <span font="serif bold 11">Ctrl + D</span>    <span font="serif 11">Open a folder</span>
-    <span font="serif bold 11">Ctrl + Shift + O</span>    <span font="serif 11">Open a new window</span>
-    <span font="serif bold 11">Alt + Left</span>    <span font="serif 11">Go to previous image</span>
-    <span font="serif bold 11">Alt + Right</span>    <span font="serif 11">Go to next image</span>
-    <span font="serif bold 11">Ctrl + Left</span>    <span font="serif 11">Rotate the image to the left</span>
-    <span font="serif bold 11">Ctrl + Right</span>    <span font="serif 11">Rotate the image to the right</span>
-    <span font="serif bold 11">Ctrl + H</span>    <span font="serif 11">Flip the image horizontally</span>
-    <span font="serif bold 11">Ctrl + V</span>    <span font="serif 11">Flip the image vertically</span>
-    <span font="serif bold 11">F11</span>    <span font="serif 11">Fullscreen</span>
-    <span font="serif bold 11">F5</span>    <span font="serif 11">Slideshow</span>
-    <span font="serif bold 11">Ctrl + S</span>    <span font="serif 11">Save the image</span>
-    <span font="serif bold 11">Ctrl + W</span>    <span font="serif 11">Close the active window</span>
-    <span font="serif bold 11">Ctrl + Q</span>    <span font="serif 11">Quit the program</span>
-    <span font="serif bold 11">F1</span>    <span font="serif 11">Open the help page</span>
-    <span font="serif bold 11">Ctrl + P</span>    <span font="serif 11">Edit the preferences</span>
-<span font="sans bold 11">Zoom options</span>
-    <span font="serif bold 11">Ctrl + Up</span>    <span font="serif 11">Zoom in</span>
-    <span font="serif bold 11">Ctrl + Down</span>    <span font="serif 11">Zoom out</span>
-    <span font="serif bold 11">N</span>    <span font="serif 11">Normal (original) size</span>
-    <span font="serif bold 11">F</span>    <span font="serif 11">Best fit</span>
+Keyboard shortcuts
+General
+    Ctrl + O    Open an image
+    Ctrl + D    Open a folder
+    Ctrl + Shift + O    Open a new window
+    Alt + Left    Go to previous image
+    Alt + Right    Go to next image
+    Ctrl + Left    Rotate the image to the left
+    Ctrl + Right    Rotate the image to the right
+    Ctrl + H    Flip the image horizontally
+    Ctrl + V    Flip the image vertically
+    F11    Fullscreen
+    F5    Slideshow
+    Ctrl + S    Save the image
+    Ctrl + W    Close the active window
+    Ctrl + Q    Quit the program
+    F1    Open the help page
+    Ctrl + P    Edit the preferences
+Zoom options
+    Ctrl + Up    Zoom in
+    Ctrl + Down    Zoom out
+    N    Normal (original) size
+    F    Best fit
 
-<span font="sans bold 12">Authors</span>
-<span font="serif 11">This program has been developed by David Whitlock.</span>
+Authors
+This program has been developed by David Whitlock.
 
-<span font="sans bold 12">License</span>
-<span font="serif 11">Cheesemaker is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.</span>
+License
+Cheesemaker is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.

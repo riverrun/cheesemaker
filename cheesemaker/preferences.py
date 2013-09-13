@@ -19,7 +19,7 @@
 
 import os
 import configparser
-from gi.repository import Gtk
+from gi.repository import Gtk, Pango
 
 class Config(object):
     def __init__(self):
@@ -168,15 +168,32 @@ class HelpDialog(Gtk.Dialog):
         except:
             with open('/usr/local/share/cheesemaker/help_page') as help_file:
                 text = help_file.read()
-        label = Gtk.Label()
-        label.set_markup(text)
-        label.set_line_wrap(True)
 
+        self.set_textview(text)
         scrolledwindow = Gtk.ScrolledWindow()
-        scrolledwindow.add_with_viewport(label)
+        scrolledwindow.add(self.textview)
         box = self.get_content_area()
         box.pack_start(scrolledwindow, True, True, 0)
         self.show_all()
+
+    def set_textview(self, text):
+        self.textview = Gtk.TextView()
+        fontdesc = Pango.FontDescription('serif')
+        self.textview.modify_font(fontdesc)
+        self.textview.set_editable(False)
+        self.textview.set_wrap_mode(Gtk.WrapMode.WORD)
+        buff = self.textview.get_buffer()
+        buff.set_text(text)
+        tag_title = buff.create_tag('title', font='sans bold 12')
+        tag_subtitle = buff.create_tag('subtitle', font='sans bold')
+        self.add_tag(buff, tag_title, 0, 1)
+        for startline in (3, 6, 9, 13, 16, 19, 25, 49, 52):
+            self.add_tag(buff, tag_subtitle, startline, startline+1)
+
+    def add_tag(self, buffer_name, tag_name, startline, endline):
+        start = buffer_name.get_iter_at_line(startline)
+        end = buffer_name.get_iter_at_line(endline)
+        buffer_name.apply_tag(tag_name, start, end)
 
 class AboutDialog(Gtk.AboutDialog):
     def __init__(self, parent):

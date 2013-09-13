@@ -28,3 +28,7 @@ Cheesemaker depends on python3, python3-gobject (python3-gi), gdk-pixbuf2 (gir1.
 ### Author
 
 This program has been developed by David Whitlock.
+
+### License
+
+Scene24 is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
