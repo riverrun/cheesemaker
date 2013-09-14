@@ -178,6 +178,7 @@ class HelpDialog(Gtk.Dialog):
 
     def set_textview(self, text):
         self.textview = Gtk.TextView()
+        self.textview.set_border_width(12)
         fontdesc = Pango.FontDescription('serif')
         self.textview.modify_font(fontdesc)
         self.textview.set_editable(False)
@@ -187,7 +188,7 @@ class HelpDialog(Gtk.Dialog):
         tag_title = buff.create_tag('title', font='sans bold 12')
         tag_subtitle = buff.create_tag('subtitle', font='sans bold')
         self.add_tag(buff, tag_title, 0, 1)
-        for startline in (3, 6, 9, 13, 16, 19, 25, 49, 52):
+        for startline in (3, 6, 9, 13, 16, 19, 25, 26, 43, 49, 52):
             self.add_tag(buff, tag_subtitle, startline, startline+1)
 
     def add_tag(self, buffer_name, tag_name, startline, endline):
