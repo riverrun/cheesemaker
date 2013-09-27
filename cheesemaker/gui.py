@@ -17,616 +17,327 @@
 # You should have received a copy of the GNU General Public License
 # along with Cheesemaker.  If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from gi.repository import Gtk, Gdk, GdkPixbuf, GLib, Gio, GExiv2
-import sys
+from PyQt4 import QtCore, QtGui
+from gi.repository import GExiv2
 import os
-import random
-from . import preferences, editimage
+import sys
+import dbus
+#import random
+from . import preferences
+#from . import preferences, editimage
 
-ui_info = """
-<ui>
-  <popup name='PopupMenu'>
-    <menuitem action='Open'/>
-    <menuitem action='Opendir'/>
-    <separator/>
-    <menuitem action='NewWin'/>
-    <separator/>
-    <menuitem action='Saveas'/>
-    <separator/>
-    <menu action='EditMenu'>
-      <menuitem action='RotateLeft'/>
-      <menuitem action='RotateRight'/>
-      <separator/>
-      <menuitem action='FlipHoriz'/>
-      <menuitem action='FlipVert'/>
-      <separator/>
-      <menuitem action='ResizeImg'/>
-      <separator/>
-      <menuitem action='CropImg'/>
-      <separator/>
-      <menuitem action='Desaturate'/>
-    </menu>
-    <separator/>
-    <menu action='ViewMenu'>
-      <menuitem action='PrevImg'/>
-      <menuitem action='NextImg'/>
-      <separator/>
-      <menuitem action='ReloadImg'/>
-      <separator/>
-      <menuitem action='Zoomin'/>
-      <menuitem action='Zoomout'/>
-      <menuitem action='Zoom1to1'/>
-      <menuitem action='Zoomfit'/>
-    </menu>
-    <menuitem action='Full'/>
-    <menuitem action='Slides'/>
-    <menu action='SlidesOpts'>
-      <menuitem action='NextSlides'/>
-      <menuitem action='RandomSlides'/>
-    </menu>
-    <separator/>
-    <menu action='HelpMenu'>
-      <menuitem action='Help'/>
-      <menuitem action='About'/>
-    </menu>
-    <separator/>
-    <menuitem action='Prefs'/>
-    <separator/>
-    <menuitem action='CloseWin'/>
-    <separator/>
-    <menuitem action='Quit'/>
-  </popup>
-</ui>
-"""
+class MainWindow(QtGui.QMainWindow):
+    def __init__(self):
+        QtGui.QMainWindow.__init__(self)
 
-class Imagewindow(Gtk.ApplicationWindow):
-    def __init__(self, app, filename):
-        Gtk.Window.__init__(self, title='Cheesemaker', application=app)
-
-        self.app = app
-        self.set_default_size(700, 500)
-        self.set_default_icon_name('cheesemaker')
-        self.image = Gtk.Image()
-        self.img_size = 'Zoomfit'
-        self.load_img = self.load_img_fit
-        self.win_width = 700
-        self.win_height = 500
-
-        self.grid = Gtk.Grid()
-        self.add(self.grid)
-
-        action_group = Gtk.ActionGroup('gui_actions')
-        self.actions(action_group)
-        uimanager = self.create_ui_manager()
-        uimanager.insert_action_group(action_group)
-        self.imageview()
-
-        self.read_preferences()
-        self.slideshow_type = 'NextSlides'
-
-        self.popup = uimanager.get_widget('/PopupMenu')
-        self.set_events(Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.STRUCTURE_MASK)
-        self.connect('button-press-event', self.on_button_press)
-
+        self.printer = QtGui.QPrinter()
+        self.create_actions()
+        self.create_menu()
         self.create_dict()
-        self.graybutton = uimanager.get_widget('/PopupMenu/EditMenu/Desaturate')
-        self.new_img_reset()
+        self.load_img = self.load_img_fit
+        self.auto_orientation = True
+        self.delay = 5
 
-        self.readable_list = ('ras', 'tif', 'tiff', 'wmf', 'icns', 'ico', 'png', 'wbmp',
-                'gif', 'pnm', 'tga', 'ani', 'xbm', 'xpm', 'jpg', 'pcx', 'jpeg', 'bmp', 'svg')
-        self.writable_list = ['ico', 'png', 'tiff', 'bmp', 'jpeg']
-        if filename:
-            if filename.lower().endswith(self.readable_list):
-                self.filename = filename
-                self.reload_img(None)
-                dirname = os.path.dirname(self.filename)
-                self.set_img_list(dirname)
-                self.img_index = self.filelist.index(self.filename)
-            else:
-                title = 'Cannot open ' + filename
-                message = 'Sorry, we cannot open ' + filename
-                self.message_dialog(Gtk.MessageType.ERROR, Gtk.ButtonsType.CLOSE, title, message)
+        self.scene = QtGui.QGraphicsScene()
+        self.img_view = ImageView(self)
+        self.img_view.setScene(self.scene)
+        self.setCentralWidget(self.img_view)
 
-    def actions(self, action_group):
-        action_group.add_actions([
-            ('Open', Gtk.STOCK_OPEN, '_Open image', None, 'Open image', self.open_image),
-            ('Opendir', None, 'Open fol_der', '<Ctrl>D', 'Open folder', self.open_dir),
-            ('NewWin', None, 'Open image in a new _window', '<Ctrl><Shift>O',
-                'Open image in a new window', self.open_image),
-            ('Saveas', Gtk.STOCK_SAVE, '_Save image', None, 'Save image', self.save_image),
-            ('EditMenu', None, '_Edit'),
-            ('RotateLeft', None, 'Rotate _left', '<Ctrl>Left', 'Rotate left', self.img_rotate_left),
-            ('RotateRight', None, 'Rotate _right', '<Ctrl>Right', 'Rotate right', self.img_rotate_right),
-            ('FlipHoriz', None, 'Flip _horizontally', '<Ctrl>H', 'Flip horizontally', self.img_flip_horiz),
-            ('FlipVert', None, 'Flip _vertically', '<Ctrl>V', 'Flip vertically', self.img_flip_vert),
-            ('ResizeImg', None, 'Resi_ze image', None, 'Resize image', self.img_resize),
-            ('CropImg', None, '_Crop image', None, 'Crop image', self.img_crop),
-            ('Prefs', None, '_Preferences', '<Ctrl>P', 'Preferences', self.set_preferences),
-            ('ViewMenu', None, '_View'),
-            ('NextImg', Gtk.STOCK_GO_FORWARD, '_Next image', '<Alt>Right', 'Go to next image', self.go_next_img),
-            ('PrevImg', Gtk.STOCK_GO_BACK, '_Previous image', '<Alt>Left', 'Go to previous image', self.go_prev_img),
-            ('ReloadImg', Gtk.STOCK_REDO, '_Reload image', '<Ctrl>R', 'Reload image', self.reload_img),
-            ('SlidesOpts', None, 'S_lideshow options'),
-            ('Zoomin', Gtk.STOCK_ZOOM_IN, 'Zoom in', '<Ctrl>Up', 'Enlarge the image', self.img_zoom_in),
-            ('Zoomout', Gtk.STOCK_ZOOM_OUT, 'Zoom out', '<Ctrl>Down', 'Shrink the image', self.img_zoom_out),
-            ('HelpMenu', None, '_Help'),
-            ('Help', Gtk.STOCK_HELP, 'Help', 'F1', 'Open the help page', self.help_page),
-            ('About', Gtk.STOCK_ABOUT, 'About', None, 'About', self.about_dialog),
-            ('CloseWin', None, 'Close window', '<Ctrl>W', 'Close window', self.close_win),
-            ('Quit', Gtk.STOCK_QUIT, 'Close all windows', None, 'Close all windows', self.quit_app)
-            ])
+        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.showMenu)
 
-        action_group.add_toggle_actions([
-            ('Desaturate', None, 'Toggle _grayscale', None, 'Toggle grayscale', self.toggle_gray),
-            ('Full', Gtk.STOCK_FULLSCREEN, '_Fullscreen', 'F11', 'Fullscreen', self.toggle_full),
-            ('Slides', None, '_Slideshow', 'F5', 'Slideshow', self.toggle_slides)
-            ])
+        self.read_prefs()
+        self.readable_list = ('bmp', 'gif', 'jpg', 'jpeg', 'mng', 'png', 'pbm',
+                'pgm', 'ppm', 'tif', 'tiff', 'xbm', 'xpm', 'svg', 'tga')
+        self.writeable_list = ('bmp', 'jpg', 'jpeg', 'png', 'ppm', 'tif', 'tiff', 'xbm', 'xpm')
+        self.resize(700, 500)
 
-        action_group.add_radio_actions([
-            ('NextSlides', None, '_Next image', None, 'Next image', 1),
-            ('RandomSlides', None, '_Random image', None, 'Random image', 0)
-            ], 1, self.slideshow_options)
+    def create_actions(self):
+        self.open_act = QtGui.QAction('&Open...', self, shortcut='Ctrl+O',
+                triggered=self.open)
+        self.print_act = QtGui.QAction('&Print...', self, shortcut='Ctrl+P',
+                enabled=False, triggered=self.print_img)
+        self.exit_act = QtGui.QAction('E&xit', self, shortcut='Ctrl+Q',
+                triggered=self.close)
+        self.fulls_act = QtGui.QAction('Fullscreen', self,
+                shortcut='F11', checkable=True, triggered=self.toggle_fullscreen)
+        self.ss_act = QtGui.QAction('Slideshow', self,
+                shortcut='F5', checkable=True, triggered=self.toggle_slideshow)
+        self.next_act = QtGui.QAction('Next image', self, shortcut='Right',
+                triggered=self.go_next_img)
+        self.prev_act = QtGui.QAction('Previous image', self, shortcut='Left',
+                triggered=self.go_prev_img)
+        self.rotleft_act = QtGui.QAction('Rotate left', self, shortcut='Ctrl+Left',
+                triggered=self.img_rotate_left)
+        self.rotright_act = QtGui.QAction('Rotate right', self, shortcut='Ctrl+Right',
+                triggered=self.img_rotate_right)
+        self.fliph_act = QtGui.QAction('Flip image horizontally', self, shortcut='Ctrl+H',
+                triggered=self.img_fliph)
+        self.flipv_act = QtGui.QAction('Flip image vertically', self, shortcut='Ctrl+V',
+                triggered=self.img_flipv)
+        self.zin_act = QtGui.QAction('Zoom &In', self,
+                shortcut='Up', enabled=True, triggered=self.zoom_in)
+        self.zout_act = QtGui.QAction('Zoom &Out', self,
+                shortcut='Down', enabled=True, triggered=self.zoom_out)
+        self.fit_win_act = QtGui.QAction('Best &fit', self,
+                checkable=True, shortcut='F', triggered=self.zoom_default)
+        self.fit_win_act.setChecked(True)
+        self.prefs_act = QtGui.QAction('Preferences', self, triggered=self.set_prefs)
+        self.help_act = QtGui.QAction('&Help', self, shortcut='F1', triggered=self.help_page)
+        self.about_act = QtGui.QAction('&About', self, triggered=self.about_cm)
+        self.aboutQt_act = QtGui.QAction('About &Qt', self,
+                triggered=QtGui.qApp.aboutQt)
 
-        action_group.add_radio_actions([
-            ('Zoom1to1', Gtk.STOCK_ZOOM_100, 'Normal size', 'N', 'Normal (original) size', 1),
-            ('Zoomfit', Gtk.STOCK_ZOOM_FIT, 'Best fit', 'F', 'Best fit', 0)
-            ], 0, self.default_zoom_ratio)
+    def create_menu(self):
+        self.popup = QtGui.QMenu(self)
+        action_list = [self.open_act, self.print_act, self.fulls_act, self.ss_act, self.next_act, self.prev_act,
+                self.zin_act, self.zout_act, self.fit_win_act, self.rotleft_act, self.rotright_act,
+                self.fliph_act, self.flipv_act, self.prefs_act, self.help_act, self.about_act, self.aboutQt_act, self.exit_act]
+        for act in action_list:
+            self.popup.addAction(act)
+            self.addAction(act)
 
-    def create_ui_manager(self):
-        uimanager = Gtk.UIManager()
-        uimanager.add_ui_from_string(ui_info)
-        accelgroup = uimanager.get_accel_group()
-        self.add_accel_group(accelgroup)
-        return uimanager
-
-    def imageview(self):
-        scrolledwindow = Gtk.ScrolledWindow()
-        scrolledwindow.set_hexpand(True)
-        scrolledwindow.set_vexpand(True)
-        scrolledwindow.connect('size-allocate', self.on_resize)
-        self.grid.attach(scrolledwindow, 0, 0, 1, 1)
-        scrolledwindow.add_with_viewport(self.image)
-
-    def read_preferences(self):
-        try:
-            conf = preferences.Config()
-            values = conf.read_config()
-            self.auto_orientation = values[0]
-            self.bg_color = Gdk.RGBA(values[1][0], values[1][1], values[1][2], values[1][3])
-            self.image.override_background_color(Gtk.StateType.NORMAL, self.bg_color)
-            self.slide_delay = values[2]
-            self.quality = values[3]
-            self.recursive = values[4]
-        except:
-            self.auto_orientation = True
-            self.bg_color = Gdk.RGBA(0.0, 0.0, 0.0, 1.0)
-            self.image.override_background_color(Gtk.StateType.NORMAL, self.bg_color)
-            self.slide_delay = 5
-            self.quality = 90
-            self.recursive = False
-
-    def set_preferences(self, button):
-        dialog = preferences.PrefsDialog(self)
-        response = dialog.run()
-        if response == Gtk.ResponseType.OK:
-            self.auto_orientation = dialog.auto_orientation
-            self.bg_color = dialog.color_button.get_rgba()
-            self.image.override_background_color(Gtk.StateType.NORMAL, self.bg_color)
-            self.slide_delay = dialog.get_delay.get_value_as_int()
-            self.quality = dialog.get_quality.get_value_as_int()
-            self.recursive = dialog.recursive
-            conf = preferences.Config()
-            conf.write_config(self.auto_orientation, dialog.color_button.get_rgba(),
-                    self.slide_delay, self.quality, self.recursive)
-        dialog.destroy()
-
+    def showMenu(self, pos):
+        self.popup.popup(self.mapToGlobal(pos))
+ 
     def create_dict(self):
         self.orient_dict = {None: self.do_nothing,
                 '1': self.do_nothing,
-                '2': self.img_flip_horiz,
+                '2': self.img_fliph,
                 '3': self.img_rotate_ud,
-                '4': self.img_flip_vert,
+                '4': self.img_flipv,
                 '5': self.img_rotate_fliph,
                 '6': self.img_rotate_right,
                 '7': self.img_rotate_flipv,
                 '8': self.img_rotate_left}
 
-    def toggle_slides(self, button):
-        if button.get_active():
-            self.fullscreen()
-            cursor = Gdk.Cursor.new(Gdk.CursorType.BLANK_CURSOR)
-            self.get_window().set_cursor(cursor)
-            self.slide_cookie = self.app.inhibit(self, Gtk.ApplicationInhibitFlags.IDLE, 'Disable screensaver')
-            self.timer_delay = GLib.timeout_add_seconds(self.slide_delay, self.start_slideshow)
-        else:
-            self.app.uninhibit(self.slide_cookie)
-            GLib.source_remove(self.timer_delay)
-            self.unfullscreen()
-            cursor = Gdk.Cursor.new(Gdk.CursorType.ARROW)
-            self.get_window().set_cursor(cursor)
+    def read_prefs(self):
+        try:
+            conf = preferences.Config()
+            values = conf.read_config()
+            self.auto_orientation = values[0]
+            self.slide_delay = values[1]
+            self.quality = values[2]
+        except:
+            self.auto_orientation = True
+            self.slide_delay = 5
+            self.quality = 90
 
-    def start_slideshow(self):
-        if self.slideshow_type:
-            self.go_next_img(None)
-        else:
-            self.filename = random.choice(self.filelist)
-            self.reload_img(None)
-        return True
-
-    def slideshow_options(self, button, current):
-        self.slideshow_type = current.get_current_value()
-
-    def toggle_full(self, button):
-        if button.get_active():
-            self.fullscreen()
-        else:
-            self.unfullscreen()
-
-    def toggle_gray(self, button):
-        if button.get_active():
-            self.pixbuf.saturate_and_pixelate(self.pixbuf, 0.0, False)
-            self.grays = True
-        else:
-            self.grays = False
-            self.load_img()
-            self.pixbuf = self.modified_state()
-        self.image.set_from_pixbuf(self.pixbuf)
-
-    def load_img_fit(self):
-        self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.win_width, self.win_height)
-        self.img_width, self.img_height = self.win_width, self.win_height
-
-    def load_img_1to1(self):
-        self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
-        self.img_width = self.pixbuf.get_width()
-        self.img_height = self.pixbuf.get_height()
-
-    def reload_img(self, button):
-        self.new_img_reset()
-        self.load_img()
-        self.set_title(self.filename.rsplit('/', 1)[1])
-        if self.auto_orientation:
-            orient = self.pixbuf.get_option('orientation')
-            self.orient_dict[orient](None)
-        self.image.set_from_pixbuf(self.pixbuf)
-
-    def default_zoom_ratio(self, button, current):
-        self.img_size = current.get_name()
-        if self.img_size == 'Zoomfit':
-            self.load_img = self.load_img_fit
-        else:
-            self.load_img = self.load_img_1to1
-        self.load_img()
-        self.pixbuf = self.modified_state()
-        self.image.set_from_pixbuf(self.pixbuf)
-
-    def img_zoom_in(self, button):
-        self.img_zoom(1.25)
-
-    def img_zoom_out(self, button):
-        self.img_zoom(0.8)
-
-    def img_zoom(self, zoomratio):
-        self.img_width, self.img_height = self.img_width * zoomratio, self.img_height * zoomratio
-        self.pixbuf = self.modified_state()
-        self.image.set_from_pixbuf(self.pixbuf)
-
-    def go_next_img(self, button):
-        self.img_index = self.img_index + 1 if self.img_index < self.last_file else 0
-        self.filename = self.filelist[self.img_index]
-        self.reload_img(None)
-
-    def go_prev_img(self, button):
-        self.img_index = self.img_index - 1 if self.img_index else self.last_file
-        self.filename = self.filelist[self.img_index]
-        self.reload_img(None)
-
-    def img_rotate_left(self, button):
-        self.mod_state = self.mod_state - 1 if self.mod_state else 3
-        self.pixbuf = self.modified_state()
-        self.image.set_from_pixbuf(self.pixbuf)
-
-    def img_rotate_right(self, button):
-        self.mod_state = self.mod_state + 1 if self.mod_state < 3 else 0
-        self.pixbuf = self.modified_state()
-        self.image.set_from_pixbuf(self.pixbuf)
-
-    def img_rotate_ud(self, button):
-        self.mod_state += 2
-        self.mod_state %= 4
-        self.pixbuf = self.modified_state()
-        self.image.set_from_pixbuf(self.pixbuf)
-
-    def img_rotate_fliph(self, button):
-        self.img_rotate_right(None)
-        self.img_flip_horiz(None)
-
-    def img_rotate_flipv(self, button):
-        self.img_rotate_right(None)
-        self.img_flip_vert(None)
-
-    def img_flip_horiz(self, button):
-        self.pixbuf = self.pixbuf.flip(True)
-        self.image.set_from_pixbuf(self.pixbuf)
-        self.fliph = not self.fliph
-
-    def img_flip_vert(self, button):
-        self.pixbuf = self.pixbuf.flip(False)
-        self.image.set_from_pixbuf(self.pixbuf)
-        self.flipv = not self.flipv
-
-    def img_resize(self, button):
-        fileinfo = GdkPixbuf.Pixbuf.get_file_info(self.filename)[1:]
-        width, height = fileinfo[0], fileinfo[1]
-        dialog = editimage.ResizeDialog(self, width, height)
-        response = dialog.run()
-        if response == Gtk.ResponseType.OK:
-            new_width = dialog.get_width.get_value_as_int()
-            new_height = dialog.get_height.get_value_as_int()
-        else:
-            dialog.destroy()
-            return
+    def set_prefs(self):
+        dialog = preferences.PrefsDialog(self)
+        if dialog.exec_() == QtGui.QDialog.Accepted:
+            self.auto_orientation = dialog.auto_orientation
+            self.slide_delay = dialog.delay_spinb.value()
+            self.quality = dialog.qual_spinb.value()
+            conf = preferences.Config()
+            conf.write_config(self.auto_orientation, self.slide_delay, self.quality)
         dialog.destroy()
-        self.save_image(None, (new_width, new_height))
 
-    def img_crop(self, button):
-        fileinfo = GdkPixbuf.Pixbuf.get_file_info(self.filename)
-        if self.mod_state % 2:
-            height, width = fileinfo[1], fileinfo[2]
-        else:
-            width, height = fileinfo[1], fileinfo[2]
-        pixwidth = self.pixbuf.get_width()
-        pixheight = self.pixbuf.get_height()
-        xoffset = (self.win_width - pixwidth) / 2
-        yoffset = (self.win_height - pixheight) / 2
-        dialog = editimage.CropDialog(self, width, height, pixwidth, pixheight, xoffset, yoffset)
-        response = dialog.run()
-        if response == Gtk.ResponseType.OK:
-            lx = dialog.get_lx.get_value_as_int()
-            rx = dialog.get_rx.get_value_as_int()
-            ty = dialog.get_ty.get_value_as_int()
-            by = dialog.get_by.get_value_as_int()
-        else:
-            self.image.handler_disconnect(dialog.draw_signal)
-            dialog.destroy()
-            return
-        self.image.handler_disconnect(dialog.draw_signal)
-        dialog.destroy()
-        new_width = width - (lx + rx)
-        new_height = height - (ty + by)
-        img_size = self.img_size
-        self.img_size = 'Zoom1to1'
-        pixbuf = self.modified_state()
-        subpixbuf = pixbuf.new_subpixbuf(lx, ty, new_width, new_height)
-        pixbuf = self.scale_img(subpixbuf, new_width, new_height)
-        self.image.set_from_pixbuf(pixbuf)
-        title = 'Save cropped image'
-        message = 'Do you want to save this cropped image?'
-        response = self.message_dialog(Gtk.MessageType.QUESTION, Gtk.ButtonsType.YES_NO, title, message)
-        if response == -8:
-            self.save_image(None, subpixbuf)
-        self.img_size = img_size
-
-    def modified_state(self):
-        if self.img_size == 'Zoomfit':
-            if self.mod_state % 2:
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.img_height, self.img_width)
+    def open(self):
+        filename = QtGui.QFileDialog.getOpenFileName(self, 'Open File',
+                QtCore.QDir.currentPath())
+        if filename:
+            if filename.endswith(self.readable_list):
+                self.open_img(filename)
             else:
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(self.filename, self.img_width, self.img_height)
-        else:
-            pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filename)
-        if self.mod_state:
-            if self.mod_state == 1:
-                pixbuf = pixbuf.rotate_simple(GdkPixbuf.PixbufRotation.CLOCKWISE)
-            elif self.mod_state == 2:
-                pixbuf = pixbuf.rotate_simple(GdkPixbuf.PixbufRotation.UPSIDEDOWN)
-            else:
-                pixbuf = pixbuf.rotate_simple(GdkPixbuf.PixbufRotation.COUNTERCLOCKWISE)
-        if self.fliph:
-            pixbuf = pixbuf.flip(True)
-        if self.flipv:
-            pixbuf = pixbuf.flip(False)
-        if self.grays:
-            pixbuf.saturate_and_pixelate(pixbuf, 0.0, False)
-        return pixbuf
+                QtGui.QMessageBox.information(self, 'Error', 'Cannot load {}.'.format(filename))
 
-    def new_img_reset(self):
-        self.mod_state = 0
-        self.fliph = False
-        self.flipv = False
-        self.grays = False
-        self.graybutton.set_active(False)
-
-    def scale_img(self, pixbuf, img_width, img_height):
-        x = img_width / self.win_width
-        y = img_height / self.win_height
-        if x < 1 and y < 1:
-            return pixbuf
-        scaleratio = x if x > y else y
-        width = img_width / scaleratio
-        height = img_height / scaleratio
-        return pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.HYPER)
-
-    def open_image(self, button):
-        title = 'Please choose a file'
-        file_action = Gtk.FileChooserAction.OPEN
-        ok_icon = Gtk.STOCK_OPEN
-        filename = self.file_dialog(title, file_action, ok_icon, None, True)
-        if not filename:
-            return
-        if button.get_name() == 'Open':
-            self.filename = filename
-            self.reload_img(None)
-            dirname = os.path.dirname(self.filename)
-            self.set_img_list(dirname)
-            self.img_index = self.filelist.index(self.filename)
-        else:
-            self.app.new_win(filename)
-
-    def open_dir(self, button):
-        title = 'Please choose a folder'
-        file_action = Gtk.FileChooserAction.SELECT_FOLDER
-        ok_icon = Gtk.STOCK_OPEN
-        dirname = self.file_dialog(title, file_action, ok_icon, None)
-        if not dirname:
-            return
+    def open_img(self, filename):
+        self.reload_img(filename)
+        dirname = os.path.dirname(filename)
         self.set_img_list(dirname)
-        self.img_index = 0
-        self.filename = self.filelist[0]
-        self.reload_img(None)
+        self.img_index = self.filelist.index(filename)
 
     def set_img_list(self, dirname):
-        if self.recursive:
-            filelist = [[os.path.join(dirpath, filename) for filename in filenames
+        filelist = os.listdir(dirname)
+        self.filelist = [os.path.join(dirname, filename) for filename in filelist
                         if filename.lower().endswith(self.readable_list)]
-                        for dirpath, dirnames, filenames in os.walk(dirname)]
-            [sublist.sort() for sublist in filelist]
-            self.filelist = [item for sublist in filelist for item in sublist]
-        else:
-            filelist = os.listdir(dirname)
-            self.filelist = [os.path.join(dirname, filename) for filename in filelist
-                            if filename.lower().endswith(self.readable_list)]
-            self.filelist.sort()
+        self.filelist.sort()
         self.last_file = len(self.filelist) - 1
 
-    def save_image(self, button, pixbuf=None, new_coords=None):
-        filetype = GdkPixbuf.Pixbuf.get_file_info(self.filename)[0].get_name()
-        name = self.filename.rsplit('/', 1)[1]
-        if filetype in self.writable_list:
-            title = 'Please choose a name for your image'
-            file_action = Gtk.FileChooserAction.SAVE
-            ok_icon = Gtk.STOCK_SAVE
-            filename = self.file_dialog(title, file_action, ok_icon, name, False, True)
-            if not filename:
+    def reload_img(self, filename):
+        self.scene.clear()
+        image = QtGui.QImage(filename)
+        self.pixmap = QtGui.QPixmap.fromImage(image)
+        self.load_img()
+        if self.auto_orientation:
+            try:
+                orient = GExiv2.Metadata(filename)['Exif.Image.Orientation']
+                self.orient_dict[orient]()
+            except:
+                pass
+
+    def load_img_fit(self):
+        self.scene.addPixmap(self.pixmap)
+        self.scene.setSceneRect(0, 0, self.pixmap.width(), self.pixmap.height())
+        self.img_view.fitInView(self.scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+
+    def load_img_1to1(self):
+        self.img_view.resetMatrix()
+        self.scene.addPixmap(self.pixmap)
+        pixitem = QtGui.QGraphicsPixmapItem(self.pixmap)
+        self.img_view.centerOn(pixitem)
+
+    def go_next_img(self):
+        self.img_index = self.img_index + 1 if self.img_index < self.last_file else 0
+        filename = self.filelist[self.img_index]
+        self.reload_img(filename)
+
+    def go_prev_img(self):
+        self.img_index = self.img_index - 1 if self.img_index else self.last_file
+        filename = self.filelist[self.img_index]
+        self.reload_img(filename)
+
+    def zoom_default(self):
+        if self.fit_win_act.isChecked():
+            self.load_img = self.load_img_fit
+            self.load_img()
+        else:
+            self.load_img = self.load_img_1to1
+            self.load_img()
+
+    def zoom_in(self):
+        self.img_view.zoom(1.1)
+
+    def zoom_out(self):
+        self.img_view.zoom(1 / 1.1)
+
+    def img_rotate_left(self):
+        self.scene.clear()
+        self.pixmap = self.pixmap.transformed(QtGui.QTransform().rotate(270))
+        self.load_img()
+
+    def img_rotate_right(self):
+        self.scene.clear()
+        self.pixmap = self.pixmap.transformed(QtGui.QTransform().rotate(90))
+        self.load_img()
+
+    def img_fliph(self):
+        self.scene.clear()
+        self.pixmap = self.pixmap.transformed(QtGui.QTransform().scale(-1, 1))
+        self.load_img()
+
+    def img_flipv(self):
+        self.scene.clear()
+        self.pixmap = self.pixmap.transformed(QtGui.QTransform().scale(1, -1))
+        self.load_img()
+
+    def img_rotate_ud(self, button):
+        self.scene.clear()
+        self.pixmap = self.pixmap.transformed(QtGui.QTransform().rotate(180))
+        self.load_img()
+
+    def img_rotate_fliph(self):
+        self.img_rotate_right()
+        self.img_fliph()
+
+    def img_rotate_flipv(self):
+        self.img_rotate_right()
+        self.img_flipv()
+
+    def toggle_fullscreen(self):
+        if self.fulls_act.isChecked():
+            self.showFullScreen()
+        else:
+            self.showNormal()
+
+    def toggle_slideshow(self):
+        if self.ss_act.isChecked():
+            self.showFullScreen()
+            self.start_ss()
+        else:
+            self.toggle_fullscreen()
+            self.timer.stop()
+            self.ss_timer.stop()
+
+    def start_ss(self):
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.update_img)
+        self.timer.start(self.delay * 1000)
+        self.ss_timer = QtCore.QTimer()
+        self.ss_timer.timeout.connect(self.update_img)
+        self.ss_timer.start(60000)
+
+    def update_img(self):
+        self.go_next_img()
+
+    def inhibit_screensaver(self):
+        bus = dbus.SessionBus()
+        ss = bus.get_object('org.freedesktop.ScreenSaver','/ScreenSaver')
+        self.inhibit_method = ss.get_dbus_method('SimulateUserActivity','org.freedesktop.ScreenSaver')
+
+    def save_img(self):
+        filename = QtGui.QFileDialog.getSaveFileName(self, 'Save your image',
+                QtCore.QDir.currentPath())
+        if filename:
+            if not filename.endswith(self.writeable_list):
+                QtGui.QMessageBox.information(self, 'Error', 'Cannot save {}.'.format(filename))
                 return
-        else:
-            title = 'Cannot save ' + name
-            message = 'Sorry, we cannot save ' + filetype + ' images'
-            self.message_dialog(Gtk.MessageType.ERROR, Gtk.ButtonsType.CLOSE, title, message)
-            return
-        img_size = self.img_size
-        self.img_size = 'Zoom1to1'
-        if not pixbuf:
-            pixbuf = self.modified_state()
-        option_list, value_list = [], []
-        if filetype == 'jpeg':
-            option_list.append('quality'); value_list.append(str(self.quality))
-        if new_coords:
-            pixbuf = pixbuf.scale_simple(new_coords[0], new_coords[1], GdkPixbuf.InterpType.HYPER)
-        pixbuf.savev(filename, filetype, option_list, value_list)
-        exif = GExiv2.Metadata(self.filename)
-        if exif:
-            saved_exif = GExiv2.Metadata(filename)
-            for tag in exif.get_exif_tags():
-                saved_exif[tag] = exif[tag]
-            saved_exif.set_orientation(GExiv2.Orientation.NORMAL)
-            saved_exif.save_file()
-        self.img_size = img_size
+            print(filename)
 
-    def file_dialog(self, title, file_action, ok_icon, filename, filefilter=False, saving=False):
-        dialog = Gtk.FileChooserDialog(title, self, file_action,
-            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-             ok_icon, Gtk.ResponseType.OK))
-        if filefilter:
-            filefilter = Gtk.FileFilter()
-            filefilter.add_pixbuf_formats()
-            dialog.set_filter(filefilter)
-        if saving:
-            dialog.set_current_name(filename)
-            dialog.set_do_overwrite_confirmation(True)
-        else:
-            pics_dir = os.environ.get('XDG_PICTURES_DIR') or os.path.expanduser('~/Pictures')
-            dialog.set_current_folder(pics_dir)
-        response = dialog.run()
-        if response == Gtk.ResponseType.OK:
-            name = dialog.get_filename()
-        else:
-            dialog.destroy()
-            return
-        dialog.destroy()
-        return name
+    def print_img(self):
+        dialog = QtGui.QPrintDialog(self.printer, self)
+        if dialog.exec_():
+            painter = QtGui.QPainter(self.printer)
+            rect = painter.viewport()
+            size = self.pixmap().size()
+            size.scale(rect.size(), QtCore.Qt.KeepAspectRatio)
+            painter.setViewport(rect.x(), rect.y(), size.width(), size.height())
+            painter.setWindow(self.pixmap().rect())
+            painter.drawPixmap(0, 0, self.pixmap())
 
-    def message_dialog(self, message_type, buttons_type, title, message):
-        dialog = Gtk.MessageDialog(self, 0, message_type,
-                buttons_type, message)
-        dialog.set_title(title)
-        response = dialog.run()
-        dialog.destroy()
-        return response
-
-    def on_button_press(self, widget, event):
-        if event.button == 1:
-            x = event.x
-            if x < 150:
-                if event.state == Gdk.ModifierType.CONTROL_MASK:
-                    self.img_rotate_left(None)
-                else:
-                    self.go_prev_img(None)
-            elif x > self.win_width - 150:
-                if event.state == Gdk.ModifierType.CONTROL_MASK:
-                    self.img_rotate_right(None)
-                else:
-                    self.go_next_img(None)
-        if event.button == 3:
-            self.popup.popup(None, None, None, None, 0, event.time)
-
-    def on_resize(self, widget, allocation):
-        try:
-            if self.win_width != allocation.width or self.win_height != allocation.height:
-                self.win_width = allocation.width
-                self.win_height = allocation.height
+    def resizeEvent(self, event=None):
+        if self.fit_win_act.isChecked():
+            try:
                 self.load_img()
-                self.pixbuf = self.modified_state()
-                self.image.set_from_pixbuf(self.pixbuf)
-        except:
-            pass
+            except:
+                pass
 
-    def help_page(self, button):
-        dialog = preferences.HelpDialog(self)
-        dialog.run()
-        dialog.destroy()
+    def help_page(self):
+        preferences.HelpDialog(self)
 
-    def about_dialog(self, button):
-        dialog = preferences.AboutDialog(self)
-        dialog.run()
-        dialog.destroy()
+    def about_cm(self):
+        about_message = 'Version: 0.3.0\nAuthor: David Whitlock\nLicense: GPLv3'
+        QtGui.QMessageBox.about(self, 'About Cheesemaker', about_message)
 
-    def close_win(self, button):
-        self.app.close_win(self)
-
-    def quit_app(self, button):
-        self.app.quit()
-
-    def do_nothing(self, button):
+    def do_nothing(self):
         return
 
-class Imageapplication(Gtk.Application):
-    def __init__(self):
-        Gtk.Application.__init__(self, application_id='org.riverrun.Cheesemaker')
-        self.set_flags(Gio.ApplicationFlags.HANDLES_OPEN)
+class ImageView(QtGui.QGraphicsView):
+    def __init__(self, parent=None):
+        QtGui.QGraphicsView.__init__(self, parent)
 
-    def do_open(self, files, n_files, hint):
-        for name in files:
-            filename = name.get_path()
-            self.new_win(filename)
+        self.load_img = parent.load_img
+        pal = self.palette()
+        pal.setColor(self.backgroundRole(), QtCore.Qt.black)
+        self.setPalette(pal)
+        self.setFrameShape(QtGui.QFrame.NoFrame)
 
-    def do_activate(self):
-        self.new_win(None)
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.setDragMode(QtGui.QGraphicsView.ScrollHandDrag)
+        QtGui.QGraphicsView.mousePressEvent(self, event)
 
-    def do_startup(self):
-        Gtk.Application.do_startup(self)
+    def mouseReleaseEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.setDragMode(QtGui.QGraphicsView.NoDrag)
+        QtGui.QGraphicsView.mouseReleaseEvent(self, event)
 
-    def new_win(self, filename):
-        win = Imagewindow(self, filename)
-        win.show_all()
-        self.add_window(win)
+    def zoom(self, zoomratio):
+        self.scale(zoomratio, zoomratio)
 
-    def close_win(self, window):
-        if len(self.get_windows()) == 1:
-            self.quit()
-        else:
-            window.destroy()
+    def wheelEvent(self,  event):
+        zoomratio = 1.1
+        if event.delta() < 0:
+            zoomratio = 1.0 / zoomratio
+        self.scale(zoomratio, zoomratio)
 
 def main():
-    app = Imageapplication()
-    app.run(sys.argv)
+    app = QtGui.QApplication(sys.argv)
+    win = MainWindow()
+    win.show()
+    args = sys.argv[1:]
+    filename = args[0] if args else None
+    if filename and filename.endswith(win.readable_list):
+        win.open_img(filename)
+    app.exec_()
