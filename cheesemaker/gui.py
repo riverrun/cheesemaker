@@ -22,12 +22,12 @@ from gi.repository import GExiv2
 import os
 import sys
 import dbus
-#import random
+import random
 from . import preferences
 #from . import preferences, editimage
 
 class MainWindow(QtGui.QMainWindow):
-    def __init__(self):
+    def __init__(self, parent):
         QtGui.QMainWindow.__init__(self)
 
         self.printer = QtGui.QPrinter()
@@ -35,8 +35,7 @@ class MainWindow(QtGui.QMainWindow):
         self.create_menu()
         self.create_dict()
         self.load_img = self.load_img_fit
-        self.auto_orientation = True
-        self.delay = 5
+        self.slide_next = True
 
         self.scene = QtGui.QGraphicsScene()
         self.img_view = ImageView(self)
@@ -47,8 +46,7 @@ class MainWindow(QtGui.QMainWindow):
         self.customContextMenuRequested.connect(self.showMenu)
 
         self.read_prefs()
-        self.readable_list = ('bmp', 'gif', 'jpg', 'jpeg', 'mng', 'png', 'pbm',
-                'pgm', 'ppm', 'tif', 'tiff', 'xbm', 'xpm', 'svg', 'tga')
+        self.readable_list = parent.readable_list
         self.writeable_list = ('bmp', 'jpg', 'jpeg', 'png', 'ppm', 'tif', 'tiff', 'xbm', 'xpm')
         self.resize(700, 500)
 
@@ -63,6 +61,8 @@ class MainWindow(QtGui.QMainWindow):
                 shortcut='F11', checkable=True, triggered=self.toggle_fullscreen)
         self.ss_act = QtGui.QAction('Slideshow', self,
                 shortcut='F5', checkable=True, triggered=self.toggle_slideshow)
+        self.ss_next_act = QtGui.QAction('Next / Random image', self, checkable=True, triggered=self.set_slide_type)
+        self.ss_next_act.setChecked(True)
         self.next_act = QtGui.QAction('Next image', self, shortcut='Right',
                 triggered=self.go_next_img)
         self.prev_act = QtGui.QAction('Previous image', self, shortcut='Left',
@@ -90,11 +90,33 @@ class MainWindow(QtGui.QMainWindow):
 
     def create_menu(self):
         self.popup = QtGui.QMenu(self)
-        action_list = [self.open_act, self.print_act, self.fulls_act, self.ss_act, self.next_act, self.prev_act,
-                self.zin_act, self.zout_act, self.fit_win_act, self.rotleft_act, self.rotright_act,
-                self.fliph_act, self.flipv_act, self.prefs_act, self.help_act, self.about_act, self.aboutQt_act, self.exit_act]
-        for act in action_list:
+        acts1 = [self.open_act, self.print_act, self.fulls_act, self.next_act, self.prev_act]
+        acts2 = [self.zin_act, self.zout_act, self.fit_win_act]
+        acts3 = [self.rotleft_act, self.rotright_act, self.fliph_act, self.flipv_act]
+        acts4 = [self.ss_act, self.ss_next_act]
+        acts5 = [self.prefs_act, self.help_act, self.about_act, self.aboutQt_act, self.exit_act]
+        for act in acts1:
             self.popup.addAction(act)
+        zoom_menu = QtGui.QMenu(self.popup)
+        zoom_menu.setTitle('Zoom')
+        for act in acts2:
+            zoom_menu.addAction(act)
+        self.popup.addMenu(zoom_menu)
+        edit_menu = QtGui.QMenu(self.popup)
+        edit_menu.setTitle('Edit')
+        for act in acts3:
+            edit_menu.addAction(act)
+        self.popup.addMenu(edit_menu)
+        slides_menu = QtGui.QMenu(self.popup)
+        slides_menu.setTitle('Slideshow')
+        for act in acts4:
+            slides_menu.addAction(act)
+        self.popup.addMenu(slides_menu)
+        for act in acts5:
+            self.popup.addAction(act)
+
+        action_list = acts1 + acts2 + acts3 + acts4 + acts5
+        for act in action_list:
             self.addAction(act)
 
     def showMenu(self, pos):
@@ -137,7 +159,7 @@ class MainWindow(QtGui.QMainWindow):
         filename = QtGui.QFileDialog.getOpenFileName(self, 'Open File',
                 QtCore.QDir.currentPath())
         if filename:
-            if filename.endswith(self.readable_list):
+            if filename.lower().endswith(self.readable_list):
                 self.open_img(filename)
             else:
                 QtGui.QMessageBox.information(self, 'Error', 'Cannot load {}.'.format(filename))
@@ -160,6 +182,7 @@ class MainWindow(QtGui.QMainWindow):
         image = QtGui.QImage(filename)
         self.pixmap = QtGui.QPixmap.fromImage(image)
         self.load_img()
+        self.setWindowTitle(filename.rsplit('/', 1)[1])
         if self.auto_orientation:
             try:
                 orient = GExiv2.Metadata(filename)['Exif.Image.Orientation']
@@ -259,7 +282,14 @@ class MainWindow(QtGui.QMainWindow):
         self.ss_timer.start(60000)
 
     def update_img(self):
-        self.go_next_img()
+        if self.slides_next:
+            self.go_next_img()
+        else:
+            filename = random.choice(self.filelist)
+            self.reload_img(filename)
+
+    def set_slide_type(self):
+        self.slides_next = self.ss_next_act.isChecked()
 
     def inhibit_screensaver(self):
         bus = dbus.SessionBus()
@@ -270,7 +300,7 @@ class MainWindow(QtGui.QMainWindow):
         filename = QtGui.QFileDialog.getSaveFileName(self, 'Save your image',
                 QtCore.QDir.currentPath())
         if filename:
-            if not filename.endswith(self.writeable_list):
+            if not filename.lower().endswith(self.writeable_list):
                 QtGui.QMessageBox.information(self, 'Error', 'Cannot save {}.'.format(filename))
                 return
             print(filename)
@@ -332,12 +362,33 @@ class ImageView(QtGui.QGraphicsView):
             zoomratio = 1.0 / zoomratio
         self.scale(zoomratio, zoomratio)
 
+class ImageViewer(QtGui.QApplication):
+    def __init__(self, args):
+        QtGui.QApplication.__init__(self, args)
+
+        self.args = args
+        self.readable_list = ('bmp', 'gif', 'jpg', 'jpeg', 'mng', 'png', 'pbm',
+                'pgm', 'ppm', 'tif', 'tiff', 'xbm', 'xpm', 'svg', 'tga')
+
+    def startup(self):
+        if len(self.args) > 1:
+            files = self.args[1:]
+            self.open_files(files)
+        else:
+            self.open_win(None)
+
+    def open_files(self, files):
+        for filename in files:
+            if filename.lower().endswith(self.readable_list):
+                self.open_win(filename)
+
+    def open_win(self, filename):
+        win = MainWindow(self)
+        win.show()
+        if filename:
+            win.open_img(filename)
+
 def main():
-    app = QtGui.QApplication(sys.argv)
-    win = MainWindow()
-    win.show()
-    args = sys.argv[1:]
-    filename = args[0] if args else None
-    if filename and filename.endswith(win.readable_list):
-        win.open_img(filename)
+    app = ImageViewer(sys.argv)
+    app.startup()
     app.exec_()

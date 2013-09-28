@@ -80,6 +80,7 @@ class PrefsDialog(QtGui.QDialog):
         self.qual_spinb.setMaximumWidth(100)
         self.qual_spinb.setRange(25, 100)
         self.qual_spinb.setValue(self.quality)
+        self.qual_spinb.setSingleStep(5)
         layout.addWidget(self.qual_spinb)
         layout.addWidget(self.qual_spinb, 5, 0, 1, 1)
         layout.addWidget(QtGui.QLabel('Quality of saved Jpeg images'), 5, 1, 1, 1)
