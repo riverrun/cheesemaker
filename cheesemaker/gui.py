@@ -24,6 +24,7 @@ import sys
 import dbus
 import random
 from . import preferences
+from .editimage import ResizeDialog
 #from . import preferences, editimage
 
 class MainWindow(QtGui.QMainWindow):
@@ -51,10 +52,12 @@ class MainWindow(QtGui.QMainWindow):
         self.resize(700, 500)
 
     def create_actions(self):
-        self.open_act = QtGui.QAction('&Open...', self, shortcut='Ctrl+O',
+        self.open_act = QtGui.QAction('&Open', self, shortcut='Ctrl+O',
                 triggered=self.open)
-        self.print_act = QtGui.QAction('&Print...', self, shortcut='Ctrl+P',
+        self.print_act = QtGui.QAction('&Print', self, shortcut='Ctrl+P',
                 enabled=False, triggered=self.print_img)
+        self.save_act = QtGui.QAction('&Save image', self, shortcut='Ctrl+S',
+                triggered=self.save_img)
         self.exit_act = QtGui.QAction('E&xit', self, shortcut='Ctrl+Q',
                 triggered=self.close)
         self.fulls_act = QtGui.QAction('Fullscreen', self,
@@ -75,6 +78,7 @@ class MainWindow(QtGui.QMainWindow):
                 triggered=self.img_fliph)
         self.flipv_act = QtGui.QAction('Flip image vertically', self, shortcut='Ctrl+V',
                 triggered=self.img_flipv)
+        self.resize_act = QtGui.QAction('Resize image', self, triggered=self.resize_img)
         self.zin_act = QtGui.QAction('Zoom &In', self,
                 shortcut='Up', enabled=True, triggered=self.zoom_in)
         self.zout_act = QtGui.QAction('Zoom &Out', self,
@@ -90,9 +94,9 @@ class MainWindow(QtGui.QMainWindow):
 
     def create_menu(self):
         self.popup = QtGui.QMenu(self)
-        acts1 = [self.open_act, self.print_act, self.fulls_act, self.next_act, self.prev_act]
+        acts1 = [self.open_act, self.print_act, self.save_act, self.fulls_act, self.next_act, self.prev_act]
         acts2 = [self.zin_act, self.zout_act, self.fit_win_act]
-        acts3 = [self.rotleft_act, self.rotright_act, self.fliph_act, self.flipv_act]
+        acts3 = [self.rotleft_act, self.rotright_act, self.fliph_act, self.flipv_act, self.resize_act]
         acts4 = [self.ss_act, self.ss_next_act]
         acts5 = [self.prefs_act, self.help_act, self.about_act, self.aboutQt_act, self.exit_act]
         for act in acts1:
@@ -153,7 +157,6 @@ class MainWindow(QtGui.QMainWindow):
             self.quality = dialog.qual_spinb.value()
             conf = preferences.Config()
             conf.write_config(self.auto_orientation, self.slide_delay, self.quality)
-        dialog.destroy()
 
     def open(self):
         filename = QtGui.QFileDialog.getOpenFileName(self, 'Open File',
@@ -162,13 +165,14 @@ class MainWindow(QtGui.QMainWindow):
             if filename.lower().endswith(self.readable_list):
                 self.open_img(filename)
             else:
-                QtGui.QMessageBox.information(self, 'Error', 'Cannot load {}.'.format(filename))
+                QtGui.QMessageBox.information(self, 'Error', 'Cannot load {} images.'.format(filename.rsplit('.', 1)[1]))
 
     def open_img(self, filename):
-        self.reload_img(filename)
-        dirname = os.path.dirname(filename)
+        self.filename = filename
+        self.reload_img()
+        dirname = os.path.dirname(self.filename)
         self.set_img_list(dirname)
-        self.img_index = self.filelist.index(filename)
+        self.img_index = self.filelist.index(self.filename)
 
     def set_img_list(self, dirname):
         filelist = os.listdir(dirname)
@@ -177,15 +181,15 @@ class MainWindow(QtGui.QMainWindow):
         self.filelist.sort()
         self.last_file = len(self.filelist) - 1
 
-    def reload_img(self, filename):
+    def reload_img(self):
         self.scene.clear()
-        image = QtGui.QImage(filename)
+        image = QtGui.QImage(self.filename)
         self.pixmap = QtGui.QPixmap.fromImage(image)
         self.load_img()
-        self.setWindowTitle(filename.rsplit('/', 1)[1])
+        self.setWindowTitle(self.filename.rsplit('/', 1)[1])
         if self.auto_orientation:
             try:
-                orient = GExiv2.Metadata(filename)['Exif.Image.Orientation']
+                orient = GExiv2.Metadata(self.filename)['Exif.Image.Orientation']
                 self.orient_dict[orient]()
             except:
                 pass
@@ -203,13 +207,13 @@ class MainWindow(QtGui.QMainWindow):
 
     def go_next_img(self):
         self.img_index = self.img_index + 1 if self.img_index < self.last_file else 0
-        filename = self.filelist[self.img_index]
-        self.reload_img(filename)
+        self.filename = self.filelist[self.img_index]
+        self.reload_img()
 
     def go_prev_img(self):
         self.img_index = self.img_index - 1 if self.img_index else self.last_file
-        filename = self.filelist[self.img_index]
-        self.reload_img(filename)
+        self.filename = self.filelist[self.img_index]
+        self.reload_img()
 
     def zoom_default(self):
         if self.fit_win_act.isChecked():
@@ -258,6 +262,19 @@ class MainWindow(QtGui.QMainWindow):
         self.img_rotate_right()
         self.img_flipv()
 
+    def resize_img(self):
+        dialog = ResizeDialog(self, self.pixmap.width(), self.pixmap.height())
+        #dialog = editimage.ResizeDialog(self, self.pixmap.width(), self.pixmap.height())
+        if dialog.exec_() == QtGui.QDialog.Accepted:
+            width = dialog.get_width.value()
+            height = dialog.get_height.value()
+            self.pixmap = self.pixmap.scaled(width, height, QtCore.Qt.IgnoreAspectRatio,
+                    QtCore.Qt.SmoothTransformation)
+            self.save_img()
+
+    def crop_img(self):
+        pass
+
     def toggle_fullscreen(self):
         if self.fulls_act.isChecked():
             self.showFullScreen()
@@ -285,8 +302,8 @@ class MainWindow(QtGui.QMainWindow):
         if self.slides_next:
             self.go_next_img()
         else:
-            filename = random.choice(self.filelist)
-            self.reload_img(filename)
+            self.filename = random.choice(self.filelist)
+            self.reload_img()
 
     def set_slide_type(self):
         self.slides_next = self.ss_next_act.isChecked()
@@ -296,14 +313,14 @@ class MainWindow(QtGui.QMainWindow):
         ss = bus.get_object('org.freedesktop.ScreenSaver','/ScreenSaver')
         self.inhibit_method = ss.get_dbus_method('SimulateUserActivity','org.freedesktop.ScreenSaver')
 
-    def save_img(self):
+    def save_img(self): # Need to rewrite exif data
         filename = QtGui.QFileDialog.getSaveFileName(self, 'Save your image',
-                QtCore.QDir.currentPath())
+                self.filename)
         if filename:
-            if not filename.lower().endswith(self.writeable_list):
-                QtGui.QMessageBox.information(self, 'Error', 'Cannot save {}.'.format(filename))
-                return
-            print(filename)
+            if filename.lower().endswith(self.writeable_list):
+                self.pixmap.save(filename, None, self.quality)
+            else:
+                QtGui.QMessageBox.information(self, 'Error', 'Cannot save {} images.'.format(filename.rsplit('.', 1)[1]))
 
     def print_img(self):
         dialog = QtGui.QPrintDialog(self.printer, self)
@@ -338,6 +355,9 @@ class ImageView(QtGui.QGraphicsView):
         QtGui.QGraphicsView.__init__(self, parent)
 
         self.load_img = parent.load_img
+        self.go_prev_img = parent.go_prev_img
+        self.go_next_img = parent.go_next_img
+
         pal = self.palette()
         pal.setColor(self.backgroundRole(), QtCore.Qt.black)
         self.setPalette(pal)
@@ -345,7 +365,13 @@ class ImageView(QtGui.QGraphicsView):
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
-            self.setDragMode(QtGui.QGraphicsView.ScrollHandDrag)
+            x = event.x()
+            if x < 100:
+                self.go_prev_img()
+            elif x > self.width() - 100:
+                self.go_next_img()
+            else:
+                self.setDragMode(QtGui.QGraphicsView.ScrollHandDrag)
         QtGui.QGraphicsView.mousePressEvent(self, event)
 
     def mouseReleaseEvent(self, event):
