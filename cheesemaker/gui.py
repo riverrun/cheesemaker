@@ -23,9 +23,7 @@ import os
 import sys
 import dbus
 import random
-from . import preferences
-from .editimage import ResizeDialog
-#from . import preferences, editimage
+from . import preferences, editimage
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent):
@@ -57,34 +55,34 @@ class MainWindow(QtGui.QMainWindow):
         self.print_act = QtGui.QAction('&Print', self, shortcut='Ctrl+P',
                 enabled=False, triggered=self.print_img)
         self.save_act = QtGui.QAction('&Save image', self, shortcut='Ctrl+S',
-                triggered=self.save_img)
+                enabled=False, triggered=self.save_img)
         self.exit_act = QtGui.QAction('E&xit', self, shortcut='Ctrl+Q',
                 triggered=self.close)
-        self.fulls_act = QtGui.QAction('Fullscreen', self,
-                shortcut='F11', checkable=True, triggered=self.toggle_fullscreen)
-        self.ss_act = QtGui.QAction('Slideshow', self,
-                shortcut='F5', checkable=True, triggered=self.toggle_slideshow)
-        self.ss_next_act = QtGui.QAction('Next / Random image', self, checkable=True, triggered=self.set_slide_type)
+        self.fulls_act = QtGui.QAction('Fullscreen', self, shortcut='F11',
+                enabled=False, checkable=True, triggered=self.toggle_fullscreen)
+        self.ss_act = QtGui.QAction('Slideshow', self, shortcut='F5',
+                enabled=False, checkable=True, triggered=self.toggle_slideshow)
+        self.ss_next_act = QtGui.QAction('Next / Random image', self, enabled=False,
+                checkable=True, triggered=self.set_slide_type)
         self.ss_next_act.setChecked(True)
         self.next_act = QtGui.QAction('Next image', self, shortcut='Right',
-                triggered=self.go_next_img)
+                enabled=False, triggered=self.go_next_img)
         self.prev_act = QtGui.QAction('Previous image', self, shortcut='Left',
-                triggered=self.go_prev_img)
+                enabled=False, triggered=self.go_prev_img)
         self.rotleft_act = QtGui.QAction('Rotate left', self, shortcut='Ctrl+Left',
-                triggered=self.img_rotate_left)
+                enabled=False, triggered=self.img_rotate_left)
         self.rotright_act = QtGui.QAction('Rotate right', self, shortcut='Ctrl+Right',
-                triggered=self.img_rotate_right)
+                enabled=False, triggered=self.img_rotate_right)
         self.fliph_act = QtGui.QAction('Flip image horizontally', self, shortcut='Ctrl+H',
-                triggered=self.img_fliph)
+                enabled=False, triggered=self.img_fliph)
         self.flipv_act = QtGui.QAction('Flip image vertically', self, shortcut='Ctrl+V',
-                triggered=self.img_flipv)
-        self.resize_act = QtGui.QAction('Resize image', self, triggered=self.resize_img)
-        self.zin_act = QtGui.QAction('Zoom &In', self,
-                shortcut='Up', enabled=True, triggered=self.zoom_in)
-        self.zout_act = QtGui.QAction('Zoom &Out', self,
-                shortcut='Down', enabled=True, triggered=self.zoom_out)
-        self.fit_win_act = QtGui.QAction('Best &fit', self,
-                checkable=True, shortcut='F', triggered=self.zoom_default)
+                enabled=False, triggered=self.img_flipv)
+        self.resize_act = QtGui.QAction('Resize image', self, enabled=False, triggered=self.resize_img)
+        self.crop_act = QtGui.QAction('Crop image', self, enabled=False, triggered=self.crop_img)
+        self.zin_act = QtGui.QAction('Zoom &In', self, shortcut='Up', enabled=False, triggered=self.zoom_in)
+        self.zout_act = QtGui.QAction('Zoom &Out', self, shortcut='Down', enabled=False, triggered=self.zoom_out)
+        self.fit_win_act = QtGui.QAction('Best &fit', self, checkable=True, shortcut='F',
+                enabled=False, triggered=self.zoom_default)
         self.fit_win_act.setChecked(True)
         self.prefs_act = QtGui.QAction('Preferences', self, triggered=self.set_prefs)
         self.help_act = QtGui.QAction('&Help', self, shortcut='F1', triggered=self.help_page)
@@ -96,9 +94,10 @@ class MainWindow(QtGui.QMainWindow):
         self.popup = QtGui.QMenu(self)
         acts1 = [self.open_act, self.print_act, self.save_act, self.fulls_act, self.next_act, self.prev_act]
         acts2 = [self.zin_act, self.zout_act, self.fit_win_act]
-        acts3 = [self.rotleft_act, self.rotright_act, self.fliph_act, self.flipv_act, self.resize_act]
-        acts4 = [self.ss_act, self.ss_next_act]
-        acts5 = [self.prefs_act, self.help_act, self.about_act, self.aboutQt_act, self.exit_act]
+        acts3 = [self.rotleft_act, self.rotright_act, self.fliph_act, self.flipv_act]
+        acts4 = [self.resize_act, self.crop_act]
+        acts5 = [self.ss_act, self.ss_next_act]
+        acts6 = [self.prefs_act, self.help_act, self.about_act, self.aboutQt_act, self.exit_act]
         for act in acts1:
             self.popup.addAction(act)
         zoom_menu = QtGui.QMenu(self.popup)
@@ -111,16 +110,19 @@ class MainWindow(QtGui.QMainWindow):
         for act in acts3:
             edit_menu.addAction(act)
         self.popup.addMenu(edit_menu)
+        edit_menu.addSeparator()
+        for act in acts4:
+            edit_menu.addAction(act)
         slides_menu = QtGui.QMenu(self.popup)
         slides_menu.setTitle('Slideshow')
-        for act in acts4:
+        for act in acts5:
             slides_menu.addAction(act)
         self.popup.addMenu(slides_menu)
-        for act in acts5:
+        for act in acts6:
             self.popup.addAction(act)
 
-        action_list = acts1 + acts2 + acts3 + acts4 + acts5
-        for act in action_list:
+        self.action_list = acts1 + acts2 + acts3 + acts4 + acts5 + acts6
+        for act in self.action_list:
             self.addAction(act)
 
     def showMenu(self, pos):
@@ -173,6 +175,10 @@ class MainWindow(QtGui.QMainWindow):
         dirname = os.path.dirname(self.filename)
         self.set_img_list(dirname)
         self.img_index = self.filelist.index(self.filename)
+        if self.action_list:
+            for act in self.action_list:
+                act.setEnabled(True)
+                self.action_list = []
 
     def set_img_list(self, dirname):
         filelist = os.listdir(dirname)
@@ -263,8 +269,7 @@ class MainWindow(QtGui.QMainWindow):
         self.img_flipv()
 
     def resize_img(self):
-        dialog = ResizeDialog(self, self.pixmap.width(), self.pixmap.height())
-        #dialog = editimage.ResizeDialog(self, self.pixmap.width(), self.pixmap.height())
+        dialog = editimage.ResizeDialog(self, self.pixmap.width(), self.pixmap.height())
         if dialog.exec_() == QtGui.QDialog.Accepted:
             width = dialog.get_width.value()
             height = dialog.get_height.value()
@@ -273,7 +278,9 @@ class MainWindow(QtGui.QMainWindow):
             self.save_img()
 
     def crop_img(self):
-        pass
+        dialog = editimage.CropDialog(self, self.pixmap.width(), self.pixmap.height())
+        if dialog.exec_() == QtGui.QDialog.Accepted:
+            print(dialog.get_lx.value())
 
     def toggle_fullscreen(self):
         if self.fulls_act.isChecked():
@@ -327,11 +334,11 @@ class MainWindow(QtGui.QMainWindow):
         if dialog.exec_():
             painter = QtGui.QPainter(self.printer)
             rect = painter.viewport()
-            size = self.pixmap().size()
+            size = self.pixmap.size()
             size.scale(rect.size(), QtCore.Qt.KeepAspectRatio)
             painter.setViewport(rect.x(), rect.y(), size.width(), size.height())
-            painter.setWindow(self.pixmap().rect())
-            painter.drawPixmap(0, 0, self.pixmap())
+            painter.setWindow(self.pixmap.rect())
+            painter.drawPixmap(0, 0, self.pixmap)
 
     def resizeEvent(self, event=None):
         if self.fit_win_act.isChecked():

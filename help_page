@@ -2,20 +2,34 @@
 <p>Cheesemaker is a simple image viewer.</p>
 
 <h3>Features</h3>
-<p>Cheesemaker supports zoom, rotating and flipping images, automatic orientation, multiple windows, saving images, resizing and cropping images, fullscreen view and a slideshow.</p>
+<p>Cheesemaker supports zoom, rotating and flipping images, automatic orientation, multiple windows, saving images, 
+resizing and cropping images, fullscreen view and a slideshow.</p>
 
 <h3>General use</h3>
-<p>Cheesemaker has no menubar or toolbar, but you can access the menu by right-clicking on the window. There are also keyboard shortcuts for most actions.</p>
+<p>Cheesemaker has no menubar or toolbar, but you can access the menu by right-clicking on the window. 
+There are also keyboard shortcuts for most actions.</p>
 
 <h3>Slideshow</h3>
 <p>While the slideshow is running, the cursor will be hidden, but you can open the popup menu by right-clicking on the window.
-With the slideshow, the images can be viewed at random or in order. This option can even be changed while the slideshow is running. There is also an option, in the preferences section, to change the time delay between images. While the slideshow is running, the screensaver will be disabled.</p>
+With the slideshow, the images can be viewed at random or in order. This option can even be changed while the slideshow 
+is running. There is also an option, in the preferences section, to change the time delay between images. While the slideshow 
+is running, the screensaver will be disabled.</p>
 
 <h3>Saving an image</h3>
-<p>There is an option to save images, and for jpeg images you can adjust the default quality in the preferences section. If there is any image (exif) data, it will be saved, but the orientation data will be rewritten. This is so that the image appears with the orientation with which you saved it. None of the changes you make to images are automatically saved, and all the changes are lost when you go to another image or reload the same image.</p>
+<p>There is an option to save images, and for jpeg images you can adjust the default quality in the preferences section. 
+If there is any image (exif) data, it will be saved, but the orientation data will be rewritten. This is so that the 
+image appears with the orientation with which you saved it. None of the changes you make to images are automatically saved, 
+and all the changes are lost when you go to another image or reload the same image.</p>
 
 <h3>Preferences</h3>
-<p>In addition to the save options and the option to change the time delay for the slideshow, you can also change the background color and enable, or disable, automatic orientation. There is an option to include images in subfolders in the list of images you can open when you go to the previous, or next, image. Any changes you make to the preferences are saved for the next time you use Cheesemaker.</p>
+<p>In addition to the save options and the option to change the time delay for the slideshow, you can also enable, 
+or disable, automatic orientation. Any changes you make to the preferences are saved for the next time you use Cheesemaker.</p>
+
+<h3>Mouse shortcuts</h3>
+<p>Right-clicking anywhere on the window will display the menu. Left-clicking near the right edge of the window will 
+show you the next image, and left-clicking near the left edge of the window will show you the previous image. 
+Left-clicking anywhere else on the window will let you scroll the image (the cursor will turn into a hand). 
+Scrolling up and down with the mouse wheel will zoom in and out.</p>
 
 <h3>Keyboard shortcuts</h3>
 <h4>General</h4>
@@ -39,4 +53,5 @@ F    Toggle best fit and original size<br>
 </blockquote>
 
 <h3>License</h3>
-<p>Cheesemaker is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.</p>
+<p>Cheesemaker is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License 
+as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.</p>

@@ -80,81 +80,90 @@ class ResizeDialog(QtGui.QDialog):
     def toggle_aspratio(self):
         self.pres_aspratio = self.aspratio.isChecked()
 
-class CropDialog(ResizeDialog):
-    def __init__(self, parent, width, height, pixwidth, pixheight, xoffset, yoffset):
-        Gtk.Dialog.__init__(self, 'Crop image', parent, 0,
-            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-             Gtk.STOCK_OK, Gtk.ResponseType.OK))
+class CropDialog(QtGui.QDialog):
+    def __init__(self, parent, width, height):
+    #def __init__(self, parent, width, height, pixwidth, pixheight, xoffset, yoffset):
+        QtGui.QDialog.__init__(self, parent)
 
-        self.image = parent.image
-        self.draw_signal = self.image.connect_after('draw', self.on_draw)
+        self.setWindowTitle('Crop image')
+        # add signal to connect to rubberband
         self.width = width
         self.height = height
-        self.pixwidth = pixwidth
-        self.pixheight = pixheight
-        self.ratio = self.width / self.pixwidth
-        self.xoffset = xoffset
-        self.yoffset = yoffset
+        #self.pixwidth = pixwidth
+        #self.pixheight = pixheight
+        #self.ratio = self.width / self.pixwidth
+        #self.xoffset = xoffset
+        #self.yoffset = yoffset
 
-        self.set_default_size(300, 200)
-        box = self.get_content_area()
-        box.set_border_width(16)
-        crop_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        box.pack_start(crop_box, True, True, 0)
-        self.set_crop_view(crop_box)
-        self.show_all()
+        layout = QtGui.QGridLayout()
+        self.setLayout(layout)
+        self.set_crop_view(layout)
 
-    def set_crop_view(self, box):
-        self.get_lx = Gtk.SpinButton()
-        self.lx_adj = Gtk.Adjustment(0, 0, self.width - 1, 10, 100, 0)
-        self.spinb_view(box, 'Distance from the left', self.get_lx, self.lx_adj)
-        self.lx_signal = self.get_lx.connect('value-changed', self.lx_changed)
+        buttons = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
 
-        self.get_rx = Gtk.SpinButton()
-        self.rx_adj = Gtk.Adjustment(0, 0, self.width - 1, 10, 100, 0)
-        self.spinb_view(box, 'Distance from the right', self.get_rx, self.rx_adj)
-        self.rx_signal = self.get_rx.connect('value-changed', self.rx_changed)
+        self.resize(350, 250)
+        self.show()
 
-        self.get_ty = Gtk.SpinButton()
-        self.ty_adj = Gtk.Adjustment(0, 0, self.height - 1, 10, 100, 0)
-        self.spinb_view(box, 'Distance from the top', self.get_ty, self.ty_adj)
-        self.ty_signal = self.get_ty.connect('value-changed', self.ty_changed)
+    def set_crop_view(self, layout):
+        layout.addWidget(QtGui.QLabel('Distance from the left'), 0, 0, 1, 1)
+        self.get_lx = QtGui.QSpinBox()
+        self.get_lx.setRange(0, self.width - 1)
+        self.get_lx.setValue(0)
+        self.get_lx.setSingleStep(10)
+        self.connect(self.get_lx, QtCore.SIGNAL('valueChanged(int)'), self.lx_changed)
+        layout.addWidget(self.get_lx, 0, 1, 1, 1)
 
-        self.get_by = Gtk.SpinButton()
-        self.by_adj = Gtk.Adjustment(0, 0, self.height - 1, 10, 100, 0)
-        self.spinb_view(box, 'Distance from the bottom', self.get_by, self.by_adj)
-        self.by_signal = self.get_by.connect('value-changed', self.by_changed)
+        layout.addWidget(QtGui.QLabel('Distance from the right'), 1, 0, 1, 1)
+        self.get_rx = QtGui.QSpinBox()
+        self.get_rx.setRange(0, self.width - 1)
+        self.get_rx.setValue(0)
+        self.get_rx.setSingleStep(10)
+        self.connect(self.get_rx, QtCore.SIGNAL('valueChanged(int)'), self.rx_changed)
+        layout.addWidget(self.get_rx, 1, 1, 1, 1)
 
-    def lx_changed(self, spinb):
-        lx = self.get_lx.get_value_as_int() + 1
+        layout.addWidget(QtGui.QLabel('Distance from the top'), 2, 0, 1, 1)
+        self.get_ty = QtGui.QSpinBox()
+        self.get_ty.setRange(0, self.height - 1)
+        self.get_ty.setValue(0)
+        self.get_ty.setSingleStep(10)
+        self.connect(self.get_ty, QtCore.SIGNAL('valueChanged(int)'), self.ty_changed)
+        layout.addWidget(self.get_ty, 2, 1, 1, 1)
+
+        layout.addWidget(QtGui.QLabel('Distance from the bottom'), 3, 0, 1, 1)
+        self.get_by = QtGui.QSpinBox()
+        self.get_by.setRange(0, self.height - 1)
+        self.get_by.setValue(0)
+        self.get_by.setSingleStep(10)
+        self.connect(self.get_by, QtCore.SIGNAL('valueChanged(int)'), self.by_changed)
+        layout.addWidget(self.get_by, 3, 1, 1, 1)
+
+    def lx_changed(self):
+        lx = self.get_lx.value() + 1
         upper = self.width - lx
-        self.rx_adj.set_upper(upper)
-        self.image.queue_draw()
+        self.get_rx.setMaximum(upper)
+        #self.image.queue_draw()
 
     def rx_changed(self, spinb):
-        rx = self.get_rx.get_value_as_int() + 1
+        rx = self.get_rx.value() + 1
         upper = self.width - rx
-        self.lx_adj.set_upper(upper)
-        self.image.queue_draw()
+        self.get_lx.setMaximum(upper)
+        #self.image.queue_draw()
 
     def ty_changed(self, spinb):
-        ty = self.get_ty.get_value_as_int() + 1
-        upper = self.height - ty
-        self.by_adj.set_upper(upper)
-        self.image.queue_draw()
+        ty = self.get_ty.value() + 1
+        upper = self.width - ty
+        self.get_by.setMaximum(upper)
+        #self.image.queue_draw()
 
     def by_changed(self, spinb):
-        by = self.get_by.get_value_as_int() + 1
-        upper = self.height - by
-        self.ty_adj.set_upper(upper)
-        self.image.queue_draw()
+        by = self.get_by.value() + 1
+        upper = self.width - by
+        self.get_ty.setMaximum(upper)
+        #self.image.queue_draw()
 
-    def on_draw(self, win, cr):
-        x = (self.get_lx.get_value_as_int() / self.ratio)
-        y = (self.get_ty.get_value_as_int() / self.ratio)
-        width = self.pixwidth - (x + (self.get_rx.get_value_as_int() / self.ratio))
-        height = self.pixheight - (y + (self.get_by.get_value_as_int() / self.ratio))
-        cr.set_source_rgb(1.0, 0.0, 0.0)
-        cr.rectangle(x + self.xoffset, y + self.yoffset, width, height)
-        cr.set_line_width(1)
-        cr.stroke()
+    def on_draw(self):
+        # draw on image
+        pass
