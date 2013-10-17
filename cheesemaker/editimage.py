@@ -17,146 +17,144 @@
 # You should have received a copy of the GNU General Public License
 # along with Cheesemaker.  If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from gi.repository import Gtk
+from PyQt4 import QtCore, QtGui
 
-class ResizeDialog(Gtk.Dialog):
+class ResizeDialog(QtGui.QDialog):
     def __init__(self, parent, width, height):
-        Gtk.Dialog.__init__(self, 'Resize image', parent, 0,
-            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-             Gtk.STOCK_OK, Gtk.ResponseType.OK))
+        QtGui.QDialog.__init__(self, parent)
 
+        self.setWindowTitle('Resize image')
         self.ratio = width / height
-        self.set_default_size(250, 200)
-        box = self.get_content_area()
-        box.set_border_width(16)
-        resize_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        box.pack_start(resize_box, True, True, 0)
-        self.set_resize_view(resize_box, width, height)
-        self.set_aspratio_view(resize_box)
-        self.show_all()
+        layout = QtGui.QGridLayout()
+        self.setLayout(layout)
 
-    def spinb_view(self, box, name, spinb, adjustment):
-        subbox = Gtk.Box()
-        box.pack_start(subbox, True, True, 0)
-        label = Gtk.Label()
-        label.set_markup('<b>' + name + '</b>')
-        label.set_halign(Gtk.Align.START)
-        subbox.pack_start(label, True, True, 0)
+        self.set_resize_view(layout, width, height)
+        self.set_aspratio_view(layout)
 
-        spinb.set_adjustment(adjustment)
-        spinb.set_update_policy(Gtk.SpinButtonUpdatePolicy.IF_VALID)
-        subbox.pack_start(spinb, True, True, 0)
+        buttons = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
 
-    def set_resize_view(self, box, width, height):
-        self.get_width = Gtk.SpinButton()
-        wadj = Gtk.Adjustment(width, 0, width, 1, 10, 0)
-        self.spinb_view(box, 'Width', self.get_width, wadj)
-        self.width_signal = self.get_width.connect('value-changed', self.width_changed)
+        self.resize(250, 150)
+        self.show()
 
-        self.get_height = Gtk.SpinButton()
-        hadj = Gtk.Adjustment(height, 0, height, 1, 10, 0)
-        self.spinb_view(box, 'Height', self.get_height, hadj)
-        self.height_signal = self.get_height.connect('value-changed', self.height_changed)
+    def set_resize_view(self, layout, width, height):
+        layout.addWidget(QtGui.QLabel('Width'), 0, 0, 1, 1)
+        self.get_width = QtGui.QSpinBox()
+        self.get_width.setRange(0, width)
+        self.get_width.setValue(width)
+        self.get_width.setSingleStep(10)
+        self.connect(self.get_width, QtCore.SIGNAL('valueChanged(int)'), self.width_changed)
+        layout.addWidget(self.get_width, 0, 1, 1, 1)
 
-    def set_aspratio_view(self, box):
+        layout.addWidget(QtGui.QLabel('Height'), 1, 0, 1, 1)
+        self.get_height = QtGui.QSpinBox()
+        self.get_height.setRange(0, height)
+        self.get_height.setValue(height)
+        self.get_height.setSingleStep(10)
+        self.connect(self.get_height, QtCore.SIGNAL('valueChanged(int)'), self.height_changed)
+        layout.addWidget(self.get_height, 1, 1, 1, 1)
+
+    def set_aspratio_view(self, layout):
         self.pres_aspratio = True
-        aspratio = Gtk.CheckButton('Preserve aspect ratio')
-        box.pack_start(aspratio, True, True, 0)
-        aspratio.connect('toggled', self.toggle_aspratio)
-        aspratio.set_active(self.pres_aspratio)
+        self.aspratio = QtGui.QCheckBox('Preserve aspect ratio')
+        self.aspratio.setChecked(True)
+        self.aspratio.toggled.connect(self.toggle_aspratio)
+        layout.addWidget(self.aspratio, 2, 0, 1, 2)
 
-    def width_changed(self, spinb):
-        width = self.get_width.get_value_as_int()
+    def width_changed(self, value):
         if self.pres_aspratio:
-            height = width / self.ratio
-            with self.get_height.handler_block(self.height_signal):
-                self.get_height.set_value(int(height))
+            height = value / self.ratio
+            self.get_height.blockSignals(True)
+            self.get_height.setValue(height)
+            self.get_height.blockSignals(False)
 
-    def height_changed(self, spinb):
-        height = self.get_height.get_value_as_int()
+    def height_changed(self, value):
         if self.pres_aspratio:
-            width = height * self.ratio
-            with self.get_width.handler_block(self.width_signal):
-                self.get_width.set_value(int(width))
+            width = value * self.ratio
+            self.get_width.blockSignals(True)
+            self.get_width.setValue(width)
+            self.get_width.blockSignals(False)
 
-    def toggle_aspratio(self, button):
-        self.pres_aspratio = button.get_active()
+    def toggle_aspratio(self):
+        self.pres_aspratio = self.aspratio.isChecked()
 
-class CropDialog(ResizeDialog):
-    def __init__(self, parent, width, height, pixwidth, pixheight, xoffset, yoffset):
-        Gtk.Dialog.__init__(self, 'Crop image', parent, 0,
-            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-             Gtk.STOCK_OK, Gtk.ResponseType.OK))
+class CropDialog(QtGui.QDialog):
+    def __init__(self, parent, width, height):
+        QtGui.QDialog.__init__(self, parent)
 
-        self.image = parent.image
-        self.draw_signal = self.image.connect_after('draw', self.on_draw)
-        self.width = width
-        self.height = height
-        self.pixwidth = pixwidth
-        self.pixheight = pixheight
-        self.ratio = self.width / self.pixwidth
-        self.xoffset = xoffset
-        self.yoffset = yoffset
+        self.setWindowTitle('Crop image')
+        self.draw = parent.img_view.crop_draw
+        # add signal to connect to rubberband
+        self.new_width = self.width = width
+        self.new_height = self.height = height
 
-        self.set_default_size(300, 200)
-        box = self.get_content_area()
-        box.set_border_width(16)
-        crop_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        box.pack_start(crop_box, True, True, 0)
-        self.set_crop_view(crop_box)
-        self.show_all()
+        layout = QtGui.QGridLayout()
+        self.setLayout(layout)
+        self.set_crop_view(layout)
 
-    def set_crop_view(self, box):
-        self.get_lx = Gtk.SpinButton()
-        self.lx_adj = Gtk.Adjustment(0, 0, self.width - 1, 10, 100, 0)
-        self.spinb_view(box, 'Distance from the left', self.get_lx, self.lx_adj)
-        self.lx_signal = self.get_lx.connect('value-changed', self.lx_changed)
+        buttons = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
 
-        self.get_rx = Gtk.SpinButton()
-        self.rx_adj = Gtk.Adjustment(0, 0, self.width - 1, 10, 100, 0)
-        self.spinb_view(box, 'Distance from the right', self.get_rx, self.rx_adj)
-        self.rx_signal = self.get_rx.connect('value-changed', self.rx_changed)
+        self.resize(350, 250)
+        self.show()
 
-        self.get_ty = Gtk.SpinButton()
-        self.ty_adj = Gtk.Adjustment(0, 0, self.height - 1, 10, 100, 0)
-        self.spinb_view(box, 'Distance from the top', self.get_ty, self.ty_adj)
-        self.ty_signal = self.get_ty.connect('value-changed', self.ty_changed)
+    def set_crop_view(self, layout):
+        layout.addWidget(QtGui.QLabel('Distance from the left'), 0, 0, 1, 1)
+        self.get_lx = QtGui.QSpinBox()
+        self.get_lx.setRange(0, self.width - 1)
+        self.get_lx.setValue(0)
+        self.get_lx.setSingleStep(5)
+        self.connect(self.get_lx, QtCore.SIGNAL('valueChanged(int)'), self.lx_changed)
+        layout.addWidget(self.get_lx, 0, 1, 1, 1)
 
-        self.get_by = Gtk.SpinButton()
-        self.by_adj = Gtk.Adjustment(0, 0, self.height - 1, 10, 100, 0)
-        self.spinb_view(box, 'Distance from the bottom', self.get_by, self.by_adj)
-        self.by_signal = self.get_by.connect('value-changed', self.by_changed)
+        layout.addWidget(QtGui.QLabel('Distance from the right'), 1, 0, 1, 1)
+        self.get_rx = QtGui.QSpinBox()
+        self.get_rx.setRange(0, self.width - 1)
+        self.get_rx.setValue(0)
+        self.get_rx.setSingleStep(5)
+        self.connect(self.get_rx, QtCore.SIGNAL('valueChanged(int)'), self.rx_changed)
+        layout.addWidget(self.get_rx, 1, 1, 1, 1)
 
-    def lx_changed(self, spinb):
-        lx = self.get_lx.get_value_as_int() + 1
-        upper = self.width - lx
-        self.rx_adj.set_upper(upper)
-        self.image.queue_draw()
+        layout.addWidget(QtGui.QLabel('Distance from the top'), 2, 0, 1, 1)
+        self.get_ty = QtGui.QSpinBox()
+        self.get_ty.setRange(0, self.height - 1)
+        self.get_ty.setValue(0)
+        self.get_ty.setSingleStep(5)
+        self.connect(self.get_ty, QtCore.SIGNAL('valueChanged(int)'), self.ty_changed)
+        layout.addWidget(self.get_ty, 2, 1, 1, 1)
 
-    def rx_changed(self, spinb):
-        rx = self.get_rx.get_value_as_int() + 1
-        upper = self.width - rx
-        self.lx_adj.set_upper(upper)
-        self.image.queue_draw()
+        layout.addWidget(QtGui.QLabel('Distance from the bottom'), 3, 0, 1, 1)
+        self.get_by = QtGui.QSpinBox()
+        self.get_by.setRange(0, self.height - 1)
+        self.get_by.setValue(0)
+        self.get_by.setSingleStep(5)
+        self.connect(self.get_by, QtCore.SIGNAL('valueChanged(int)'), self.by_changed)
+        layout.addWidget(self.get_by, 3, 1, 1, 1)
 
-    def ty_changed(self, spinb):
-        ty = self.get_ty.get_value_as_int() + 1
-        upper = self.height - ty
-        self.by_adj.set_upper(upper)
-        self.image.queue_draw()
+    def lx_changed(self):
+        upper = self.width - self.get_lx.value()
+        self.get_rx.setMaximum(upper - 1)
+        self.new_width = upper - self.get_rx.value()
+        self.draw(self.get_lx.value(), self.get_ty.value(), self.new_width, self.new_height)
 
-    def by_changed(self, spinb):
-        by = self.get_by.get_value_as_int() + 1
-        upper = self.height - by
-        self.ty_adj.set_upper(upper)
-        self.image.queue_draw()
+    def rx_changed(self):
+        upper = self.width - self.get_rx.value()
+        self.get_lx.setMaximum(upper - 1)
+        self.new_width = upper - self.get_lx.value()
+        self.draw(self.get_lx.value(), self.get_ty.value(), self.new_width, self.new_height)
 
-    def on_draw(self, win, cr):
-        x = (self.get_lx.get_value_as_int() / self.ratio)
-        y = (self.get_ty.get_value_as_int() / self.ratio)
-        width = self.pixwidth - (x + (self.get_rx.get_value_as_int() / self.ratio))
-        height = self.pixheight - (y + (self.get_by.get_value_as_int() / self.ratio))
-        cr.set_source_rgb(1.0, 0.0, 0.0)
-        cr.rectangle(x + self.xoffset, y + self.yoffset, width, height)
-        cr.set_line_width(1)
-        cr.stroke()
+    def ty_changed(self):
+        upper = self.height - self.get_ty.value()
+        self.get_by.setMaximum(upper - 1)
+        self.new_height = upper - self.get_by.value()
+        self.draw(self.get_lx.value(), self.get_ty.value(), self.new_width, self.new_height)
+
+    def by_changed(self):
+        upper = self.height - self.get_by.value()
+        self.get_ty.setMaximum(upper - 1)
+        self.new_height = upper - self.get_ty.value()
+        self.draw(self.get_lx.value(), self.get_ty.value(), self.new_width, self.new_height)
