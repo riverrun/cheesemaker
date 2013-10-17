@@ -82,18 +82,13 @@ class ResizeDialog(QtGui.QDialog):
 
 class CropDialog(QtGui.QDialog):
     def __init__(self, parent, width, height):
-    #def __init__(self, parent, width, height, pixwidth, pixheight, xoffset, yoffset):
         QtGui.QDialog.__init__(self, parent)
 
         self.setWindowTitle('Crop image')
+        self.draw = parent.img_view.crop_draw
         # add signal to connect to rubberband
-        self.width = width
-        self.height = height
-        #self.pixwidth = pixwidth
-        #self.pixheight = pixheight
-        #self.ratio = self.width / self.pixwidth
-        #self.xoffset = xoffset
-        #self.yoffset = yoffset
+        self.new_width = self.width = width
+        self.new_height = self.height = height
 
         layout = QtGui.QGridLayout()
         self.setLayout(layout)
@@ -112,7 +107,7 @@ class CropDialog(QtGui.QDialog):
         self.get_lx = QtGui.QSpinBox()
         self.get_lx.setRange(0, self.width - 1)
         self.get_lx.setValue(0)
-        self.get_lx.setSingleStep(10)
+        self.get_lx.setSingleStep(5)
         self.connect(self.get_lx, QtCore.SIGNAL('valueChanged(int)'), self.lx_changed)
         layout.addWidget(self.get_lx, 0, 1, 1, 1)
 
@@ -120,7 +115,7 @@ class CropDialog(QtGui.QDialog):
         self.get_rx = QtGui.QSpinBox()
         self.get_rx.setRange(0, self.width - 1)
         self.get_rx.setValue(0)
-        self.get_rx.setSingleStep(10)
+        self.get_rx.setSingleStep(5)
         self.connect(self.get_rx, QtCore.SIGNAL('valueChanged(int)'), self.rx_changed)
         layout.addWidget(self.get_rx, 1, 1, 1, 1)
 
@@ -128,7 +123,7 @@ class CropDialog(QtGui.QDialog):
         self.get_ty = QtGui.QSpinBox()
         self.get_ty.setRange(0, self.height - 1)
         self.get_ty.setValue(0)
-        self.get_ty.setSingleStep(10)
+        self.get_ty.setSingleStep(5)
         self.connect(self.get_ty, QtCore.SIGNAL('valueChanged(int)'), self.ty_changed)
         layout.addWidget(self.get_ty, 2, 1, 1, 1)
 
@@ -136,34 +131,30 @@ class CropDialog(QtGui.QDialog):
         self.get_by = QtGui.QSpinBox()
         self.get_by.setRange(0, self.height - 1)
         self.get_by.setValue(0)
-        self.get_by.setSingleStep(10)
+        self.get_by.setSingleStep(5)
         self.connect(self.get_by, QtCore.SIGNAL('valueChanged(int)'), self.by_changed)
         layout.addWidget(self.get_by, 3, 1, 1, 1)
 
     def lx_changed(self):
-        lx = self.get_lx.value() + 1
-        upper = self.width - lx
-        self.get_rx.setMaximum(upper)
-        #self.image.queue_draw()
+        upper = self.width - self.get_lx.value()
+        self.get_rx.setMaximum(upper - 1)
+        self.new_width = upper - self.get_rx.value()
+        self.draw(self.get_lx.value(), self.get_ty.value(), self.new_width, self.new_height)
 
-    def rx_changed(self, spinb):
-        rx = self.get_rx.value() + 1
-        upper = self.width - rx
-        self.get_lx.setMaximum(upper)
-        #self.image.queue_draw()
+    def rx_changed(self):
+        upper = self.width - self.get_rx.value()
+        self.get_lx.setMaximum(upper - 1)
+        self.new_width = upper - self.get_lx.value()
+        self.draw(self.get_lx.value(), self.get_ty.value(), self.new_width, self.new_height)
 
-    def ty_changed(self, spinb):
-        ty = self.get_ty.value() + 1
-        upper = self.width - ty
-        self.get_by.setMaximum(upper)
-        #self.image.queue_draw()
+    def ty_changed(self):
+        upper = self.height - self.get_ty.value()
+        self.get_by.setMaximum(upper - 1)
+        self.new_height = upper - self.get_by.value()
+        self.draw(self.get_lx.value(), self.get_ty.value(), self.new_width, self.new_height)
 
-    def by_changed(self, spinb):
-        by = self.get_by.value() + 1
-        upper = self.width - by
-        self.get_ty.setMaximum(upper)
-        #self.image.queue_draw()
-
-    def on_draw(self):
-        # draw on image
-        pass
+    def by_changed(self):
+        upper = self.height - self.get_by.value()
+        self.get_ty.setMaximum(upper - 1)
+        self.new_height = upper - self.get_ty.value()
+        self.draw(self.get_lx.value(), self.get_ty.value(), self.new_width, self.new_height)

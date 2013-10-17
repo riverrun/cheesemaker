@@ -33,23 +33,25 @@ Scrolling up and down with the mouse wheel will zoom in and out.</p>
 
 <h3>Keyboard shortcuts</h3>
 <h4>General</h4>
-<blockquote>Ctrl + O    Open an image<br>
-Left    Go to previous image<br>
-Right    Go to next image<br>
-Ctrl + Left    Rotate the image to the left<br>
-Ctrl + Right    Rotate the image to the right<br>
-Ctrl + H    Flip the image horizontally<br>
-Ctrl + V    Flip the image vertically<br>
-F11    Fullscreen<br>
-F5    Slideshow<br>
-Ctrl + S    Save the image<br>
-Ctrl + Q    Quit the program<br>
-F1    Open the help page<br>
+<blockquote><pre>Ctrl + O    Open an image
+Ctrl + R    Reload image
+Left    Go to previous image
+Right    Go to next image
+Ctrl + Left    Rotate the image to the left
+Ctrl + Right    Rotate the image to the right
+Ctrl + H    Flip the image horizontally
+Ctrl + V    Flip the image vertically
+F11    Fullscreen
+F5    Slideshow
+Ctrl + P    Print image
+Ctrl + S    Save image
+Ctrl + Q    Quit the program
+F1    Open the help page</pre>
 </blockquote>
-<h4>Zoom options</h4>
-<blockquote>Up    Zoom in<br>
-Down    Zoom out<br>
-F    Toggle best fit and original size<br>
+<h4>Zoom</h4>
+<blockquote><pre>Up    Zoom in
+Down    Zoom out
+F    Toggle best fit and original size</pre>
 </blockquote>
 
 <h3>License</h3>

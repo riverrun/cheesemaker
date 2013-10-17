@@ -52,6 +52,8 @@ class MainWindow(QtGui.QMainWindow):
     def create_actions(self):
         self.open_act = QtGui.QAction('&Open', self, shortcut='Ctrl+O',
                 triggered=self.open)
+        self.reload_act = QtGui.QAction('&Reload image', self, shortcut='Ctrl+R',
+                enabled=False, triggered=self.reload_img)
         self.print_act = QtGui.QAction('&Print', self, shortcut='Ctrl+P',
                 enabled=False, triggered=self.print_img)
         self.save_act = QtGui.QAction('&Save image', self, shortcut='Ctrl+S',
@@ -92,7 +94,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def create_menu(self):
         self.popup = QtGui.QMenu(self)
-        acts1 = [self.open_act, self.print_act, self.save_act, self.fulls_act, self.next_act, self.prev_act]
+        acts1 = [self.open_act, self.reload_act, self.print_act, self.save_act, self.fulls_act, self.next_act, self.prev_act]
         acts2 = [self.zin_act, self.zout_act, self.fit_win_act]
         acts3 = [self.rotleft_act, self.rotright_act, self.fliph_act, self.flipv_act]
         acts4 = [self.resize_act, self.crop_act]
@@ -278,9 +280,14 @@ class MainWindow(QtGui.QMainWindow):
             self.save_img()
 
     def crop_img(self):
+        self.img_view.setup_crop(self.pixmap.width(), self.pixmap.height())
         dialog = editimage.CropDialog(self, self.pixmap.width(), self.pixmap.height())
         if dialog.exec_() == QtGui.QDialog.Accepted:
-            print(dialog.get_lx.value())
+            coords = self.img_view.get_coords()
+            self.pixmap = self.pixmap.copy(*coords)
+            self.scene.clear()
+            self.load_img()
+        self.img_view.rband.hide()
 
     def toggle_fullscreen(self):
         if self.fulls_act.isChecked():
@@ -320,12 +327,18 @@ class MainWindow(QtGui.QMainWindow):
         ss = bus.get_object('org.freedesktop.ScreenSaver','/ScreenSaver')
         self.inhibit_method = ss.get_dbus_method('SimulateUserActivity','org.freedesktop.ScreenSaver')
 
-    def save_img(self): # Need to rewrite exif data
-        filename = QtGui.QFileDialog.getSaveFileName(self, 'Save your image',
-                self.filename)
+    def save_img(self):
+        filename = QtGui.QFileDialog.getSaveFileName(self, 'Save your image', self.filename)
         if filename:
             if filename.lower().endswith(self.writeable_list):
                 self.pixmap.save(filename, None, self.quality)
+                exif = GExiv2.Metadata(self.filename)
+                if exif:
+                    saved_exif = GExiv2.Metadata(filename)
+                    for tag in exif.get_exif_tags():
+                        saved_exif[tag] = exif[tag]
+                    saved_exif.set_orientation(GExiv2.Orientation.NORMAL)
+                    saved_exif.save_file()
             else:
                 QtGui.QMessageBox.information(self, 'Error', 'Cannot save {} images.'.format(filename.rsplit('.', 1)[1]))
 
@@ -361,7 +374,6 @@ class ImageView(QtGui.QGraphicsView):
     def __init__(self, parent=None):
         QtGui.QGraphicsView.__init__(self, parent)
 
-        self.load_img = parent.load_img
         self.go_prev_img = parent.go_prev_img
         self.go_next_img = parent.go_next_img
 
@@ -382,8 +394,7 @@ class ImageView(QtGui.QGraphicsView):
         QtGui.QGraphicsView.mousePressEvent(self, event)
 
     def mouseReleaseEvent(self, event):
-        if event.button() == QtCore.Qt.LeftButton:
-            self.setDragMode(QtGui.QGraphicsView.NoDrag)
+        self.setDragMode(QtGui.QGraphicsView.NoDrag)
         QtGui.QGraphicsView.mouseReleaseEvent(self, event)
 
     def zoom(self, zoomratio):
@@ -394,6 +405,25 @@ class ImageView(QtGui.QGraphicsView):
         if event.delta() < 0:
             zoomratio = 1.0 / zoomratio
         self.scale(zoomratio, zoomratio)
+
+    def setup_crop(self, width, height):
+        self.rband = QtGui.QRubberBand(QtGui.QRubberBand.Rectangle, self)
+        coords = self.mapFromScene(0, 0, width, height)
+        self.rband.setGeometry(QtCore.QRect(coords.boundingRect()))
+        self.rband.show()
+
+    def crop_draw(self, x, y, width, height):
+        coords = self.mapFromScene(x, y, width, height)
+        self.rband.setGeometry(QtCore.QRect(coords.boundingRect()))
+
+    def get_coords(self):
+        rect = self.rband.geometry()
+        size = self.mapToScene(rect).boundingRect()
+        x = int(size.x())
+        y = int(size.y())
+        width = int(size.width())
+        height = int(size.height())
+        return (x, y, width, height)
 
 class ImageViewer(QtGui.QApplication):
     def __init__(self, args):
