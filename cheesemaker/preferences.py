@@ -94,6 +94,24 @@ class PrefsDialog(QtGui.QDialog):
     def auto_orient(self):
         self.auto_orientation = self.orient_check.isChecked()
 
+class PropsDialog(QtGui.QDialog):
+    def __init__(self, parent, name, width, height):
+        QtGui.QDialog.__init__(self, parent)
+
+        self.setWindowTitle('Properties')
+        layout = QtGui.QGridLayout()
+        self.setLayout(layout)
+
+        layout.addWidget(QtGui.QLabel('<b>Name</b>'), 0, 0, 1, 1)
+        layout.addWidget(QtGui.QLabel(name), 0, 1, 1, 1)
+        layout.addWidget(QtGui.QLabel('<b>Width</b>'), 1, 0, 1, 1)
+        layout.addWidget(QtGui.QLabel(str(width)), 1, 1, 1, 1)
+        layout.addWidget(QtGui.QLabel('<b>Height</b>'), 2, 0, 1, 1)
+        layout.addWidget(QtGui.QLabel(str(height)), 2, 1, 1, 1)
+
+        self.resize(200, 250)
+        self.show()
+
 class HelpDialog(QtGui.QDialog):
     def __init__(self, parent):
         QtGui.QDialog.__init__(self, parent)
