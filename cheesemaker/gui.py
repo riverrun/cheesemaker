@@ -87,6 +87,7 @@ class MainWindow(QtGui.QMainWindow):
                 enabled=False, triggered=self.zoom_default)
         self.fit_win_act.setChecked(True)
         self.prefs_act = QtGui.QAction('Preferences', self, triggered=self.set_prefs)
+        self.props_act = QtGui.QAction('Properties', self, triggered=self.get_props)
         self.help_act = QtGui.QAction('&Help', self, shortcut='F1', triggered=self.help_page)
         self.about_act = QtGui.QAction('&About', self, triggered=self.about_cm)
         self.aboutQt_act = QtGui.QAction('About &Qt', self,
@@ -99,7 +100,7 @@ class MainWindow(QtGui.QMainWindow):
         acts3 = [self.rotleft_act, self.rotright_act, self.fliph_act, self.flipv_act]
         acts4 = [self.resize_act, self.crop_act]
         acts5 = [self.ss_act, self.ss_next_act]
-        acts6 = [self.prefs_act, self.help_act, self.about_act, self.aboutQt_act, self.exit_act]
+        acts6 = [self.prefs_act, self.props_act, self.help_act, self.about_act, self.aboutQt_act, self.exit_act]
         for act in acts1:
             self.popup.addAction(act)
         zoom_menu = QtGui.QMenu(self.popup)
@@ -210,6 +211,7 @@ class MainWindow(QtGui.QMainWindow):
     def load_img_1to1(self):
         self.img_view.resetMatrix()
         self.scene.addPixmap(self.pixmap)
+        self.scene.setSceneRect(0, 0, self.pixmap.width(), self.pixmap.height())
         pixitem = QtGui.QGraphicsPixmapItem(self.pixmap)
         self.img_view.centerOn(pixitem)
 
@@ -359,6 +361,10 @@ class MainWindow(QtGui.QMainWindow):
                 self.load_img()
             except:
                 pass
+
+    def get_props(self):
+        image = QtGui.QImage(self.filename)
+        preferences.PropsDialog(self, self.filename.rsplit('/', 1)[1], image.width(), image.height())
 
     def help_page(self):
         preferences.HelpDialog(self)
