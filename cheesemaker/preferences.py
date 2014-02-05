@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Cheesemaker.  If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from PyQt4 import QtGui
+from PyQt5 import QtWidgets
 import os
 import configparser
 
@@ -48,42 +48,42 @@ class Config(object):
         with open(self.config_file, 'w') as configfile:
             self.config.write(configfile)
 
-class PrefsDialog(QtGui.QDialog):
+class PrefsDialog(QtWidgets.QDialog):
     def __init__(self, parent):
-        QtGui.QDialog.__init__(self, parent)
+        QtWidgets.QDialog.__init__(self, parent)
 
         self.auto_orientation = parent.auto_orientation
         self.slide_delay = parent.slide_delay
         self.quality = parent.quality
 
         self.setWindowTitle('Preferences')
-        layout = QtGui.QGridLayout()
+        layout = QtWidgets.QGridLayout()
         self.setLayout(layout)
 
-        layout.addWidget(QtGui.QLabel('<b>Automatic orientation</b>'), 0, 0, 1, 2)
-        self.orient_check = QtGui.QCheckBox('Automatic orientation using image data')
+        layout.addWidget(QtWidgets.QLabel('<b>Automatic orientation</b>'), 0, 0, 1, 2)
+        self.orient_check = QtWidgets.QCheckBox('Automatic orientation using image data')
         self.orient_check.setChecked(self.auto_orientation)
         self.orient_check.toggled.connect(self.auto_orient)
         layout.addWidget(self.orient_check, 1, 0, 1, 2)
 
-        layout.addWidget(QtGui.QLabel('<b>Slideshow time delay</b>'), 2, 0, 1, 2)
-        layout.addWidget(QtGui.QLabel('Time between images'), 3, 0, 1, 1)
-        self.delay_spinb = QtGui.QSpinBox()
+        layout.addWidget(QtWidgets.QLabel('<b>Slideshow time delay</b>'), 2, 0, 1, 2)
+        layout.addWidget(QtWidgets.QLabel('Time between images'), 3, 0, 1, 1)
+        self.delay_spinb = QtWidgets.QSpinBox()
         self.delay_spinb.setRange(1, 50)
         self.delay_spinb.setValue(self.slide_delay)
         layout.addWidget(self.delay_spinb)
         layout.addWidget(self.delay_spinb, 3, 1, 1, 1)
 
-        layout.addWidget(QtGui.QLabel('<b>Jpeg quality</b>'), 4, 0, 1, 2)
-        layout.addWidget(QtGui.QLabel('Quality of saved Jpeg images'), 5, 0, 1, 1)
-        self.qual_spinb = QtGui.QSpinBox()
+        layout.addWidget(QtWidgets.QLabel('<b>Jpeg quality</b>'), 4, 0, 1, 2)
+        layout.addWidget(QtWidgets.QLabel('Quality of saved Jpeg images'), 5, 0, 1, 1)
+        self.qual_spinb = QtWidgets.QSpinBox()
         self.qual_spinb.setRange(25, 100)
         self.qual_spinb.setValue(self.quality)
         self.qual_spinb.setSingleStep(5)
         layout.addWidget(self.qual_spinb)
         layout.addWidget(self.qual_spinb, 5, 1, 1, 1)
 
-        buttons = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
+        buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -94,27 +94,27 @@ class PrefsDialog(QtGui.QDialog):
     def auto_orient(self):
         self.auto_orientation = self.orient_check.isChecked()
 
-class PropsDialog(QtGui.QDialog):
+class PropsDialog(QtWidgets.QDialog):
     def __init__(self, parent, name, width, height):
-        QtGui.QDialog.__init__(self, parent)
+        QtWidgets.QDialog.__init__(self, parent)
 
         self.setWindowTitle('Properties')
-        layout = QtGui.QGridLayout()
+        layout = QtWidgets.QGridLayout()
         self.setLayout(layout)
 
-        layout.addWidget(QtGui.QLabel('<b>Name</b>'), 0, 0, 1, 1)
-        layout.addWidget(QtGui.QLabel(name), 0, 1, 1, 1)
-        layout.addWidget(QtGui.QLabel('<b>Width</b>'), 1, 0, 1, 1)
-        layout.addWidget(QtGui.QLabel(str(width)), 1, 1, 1, 1)
-        layout.addWidget(QtGui.QLabel('<b>Height</b>'), 2, 0, 1, 1)
-        layout.addWidget(QtGui.QLabel(str(height)), 2, 1, 1, 1)
+        layout.addWidget(QtWidgets.QLabel('<b>Name</b>'), 0, 0, 1, 1)
+        layout.addWidget(QtWidgets.QLabel(name), 0, 1, 1, 1)
+        layout.addWidget(QtWidgets.QLabel('<b>Width</b>'), 1, 0, 1, 1)
+        layout.addWidget(QtWidgets.QLabel(str(width)), 1, 1, 1, 1)
+        layout.addWidget(QtWidgets.QLabel('<b>Height</b>'), 2, 0, 1, 1)
+        layout.addWidget(QtWidgets.QLabel(str(height)), 2, 1, 1, 1)
 
         self.resize(200, 250)
         self.show()
 
-class HelpDialog(QtGui.QDialog):
+class HelpDialog(QtWidgets.QDialog):
     def __init__(self, parent):
-        QtGui.QDialog.__init__(self, parent)
+        QtWidgets.QDialog.__init__(self, parent)
 
         self.setWindowTitle('Help!')
 
@@ -125,12 +125,12 @@ class HelpDialog(QtGui.QDialog):
             with open('/usr/local/share/cheesemaker/help_page') as help_file:
                 text = help_file.read()
 
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         self.setLayout(layout)
-        label = QtGui.QLabel(text)
+        label = QtWidgets.QLabel(text)
         label.setWordWrap(True)
         label.setMargin(12)
-        scrollwin = QtGui.QScrollArea()
+        scrollwin = QtWidgets.QScrollArea()
         scrollwin.setWidget(label)
         layout.addWidget(scrollwin)
         self.resize(650, 500)
