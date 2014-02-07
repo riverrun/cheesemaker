@@ -45,7 +45,7 @@ class ResizeDialog(QtWidgets.QDialog):
         self.get_width.setRange(0, width)
         self.get_width.setValue(width)
         self.get_width.setSingleStep(10)
-        self.connect(self.get_width, QtCore.SIGNAL('valueChanged(int)'), self.width_changed) # need to replace SIGNAL
+        self.get_width.valueChanged.connect(self.width_changed)
         layout.addWidget(self.get_width, 0, 1, 1, 1)
 
         layout.addWidget(QtWidgets.QLabel('Height'), 1, 0, 1, 1)
@@ -53,7 +53,7 @@ class ResizeDialog(QtWidgets.QDialog):
         self.get_height.setRange(0, height)
         self.get_height.setValue(height)
         self.get_height.setSingleStep(10)
-        self.connect(self.get_height, QtCore.SIGNAL('valueChanged(int)'), self.height_changed)
+        self.get_height.valueChanged.connect(self.height_changed)
         layout.addWidget(self.get_height, 1, 1, 1, 1)
 
     def set_aspratio_view(self, layout):
@@ -86,7 +86,6 @@ class CropDialog(QtWidgets.QDialog):
 
         self.setWindowTitle('Crop image')
         self.draw = parent.img_view.crop_draw
-        # add signal to connect to rubberband
         self.new_width = self.width = width
         self.new_height = self.height = height
 
@@ -108,7 +107,7 @@ class CropDialog(QtWidgets.QDialog):
         self.get_lx.setRange(0, self.width - 1)
         self.get_lx.setValue(0)
         self.get_lx.setSingleStep(5)
-        self.connect(self.get_lx, QtCore.SIGNAL('valueChanged(int)'), self.lx_changed)
+        self.get_lx.valueChanged.connect(self.lx_changed)
         layout.addWidget(self.get_lx, 0, 1, 1, 1)
 
         layout.addWidget(QtWidgets.QLabel('Distance from the right'), 1, 0, 1, 1)
@@ -116,7 +115,7 @@ class CropDialog(QtWidgets.QDialog):
         self.get_rx.setRange(0, self.width - 1)
         self.get_rx.setValue(0)
         self.get_rx.setSingleStep(5)
-        self.connect(self.get_rx, QtCore.SIGNAL('valueChanged(int)'), self.rx_changed)
+        self.get_rx.valueChanged.connect(self.rx_changed)
         layout.addWidget(self.get_rx, 1, 1, 1, 1)
 
         layout.addWidget(QtWidgets.QLabel('Distance from the top'), 2, 0, 1, 1)
@@ -124,7 +123,7 @@ class CropDialog(QtWidgets.QDialog):
         self.get_ty.setRange(0, self.height - 1)
         self.get_ty.setValue(0)
         self.get_ty.setSingleStep(5)
-        self.connect(self.get_ty, QtCore.SIGNAL('valueChanged(int)'), self.ty_changed)
+        self.get_ty.valueChanged.connect(self.ty_changed)
         layout.addWidget(self.get_ty, 2, 1, 1, 1)
 
         layout.addWidget(QtWidgets.QLabel('Distance from the bottom'), 3, 0, 1, 1)
@@ -132,7 +131,7 @@ class CropDialog(QtWidgets.QDialog):
         self.get_by.setRange(0, self.height - 1)
         self.get_by.setValue(0)
         self.get_by.setSingleStep(5)
-        self.connect(self.get_by, QtCore.SIGNAL('valueChanged(int)'), self.by_changed)
+        self.get_by.valueChanged.connect(self.by_changed)
         layout.addWidget(self.get_by, 3, 1, 1, 1)
 
     def lx_changed(self):

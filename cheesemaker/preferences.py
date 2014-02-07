@@ -109,7 +109,7 @@ class PropsDialog(QtWidgets.QDialog):
         layout.addWidget(QtWidgets.QLabel('<b>Height</b>'), 2, 0, 1, 1)
         layout.addWidget(QtWidgets.QLabel(str(height)), 2, 1, 1, 1)
 
-        self.resize(200, 250)
+        self.resize(200, 100)
         self.show()
 
 class HelpDialog(QtWidgets.QDialog):
