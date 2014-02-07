@@ -1,6 +1,6 @@
 # Cheesemaker
 
-A simple image viewer using Python 3 and Qt4.
+A simple image viewer using Python 3 and Qt5.
 
 ### What's so special about Cheesemaker?
 
@@ -18,8 +18,14 @@ The preferences (automatic orientation, slideshow time delay and jpeg image qual
 
 * Put my feet up and relax.
 * Maybe add more basic editing functionality.
+* Maybe improve auto-orientation.
 * Take it easy for a while.
 * Make it faster.
+
+### Qt4 version
+
+From version 0.2.5 upto version 0.3.0, this program used PyQt4 (click on the **release** tab to see the available versions).
+That version depends on python3, python3-pyqt4, python3-gobject (python3-gi), and libgexiv2 (gir1.2-gexiv2).
 
 ### Gtk3 version
 
@@ -28,7 +34,7 @@ That version depends on python3, python3-gobject (python3-gi), gdk-pixbuf2 (gir1
 
 ### Dependencies
 
-Cheesemaker depends on python3, python3-pyqt4, python3-gobject (python3-gi), and libgexiv2 (gir1.2-gexiv2).
+Cheesemaker depends on python3, python3-pyqt5, python3-gobject (python3-gi), and libgexiv2 (gir1.2-gexiv2).
 
 ### Author
 
