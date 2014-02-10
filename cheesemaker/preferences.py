@@ -53,7 +53,7 @@ class PrefsDialog(QDialog):
     def __init__(self, parent):
         QDialog.__init__(self, parent)
 
-        self.auto_orientation = parent.auto_orientation
+        self.auto_orient = parent.auto_orient
         self.slide_delay = parent.slide_delay
         self.quality = parent.quality
 
@@ -63,8 +63,8 @@ class PrefsDialog(QDialog):
 
         layout.addWidget(QLabel('<b>Automatic orientation</b>'), 0, 0, 1, 2)
         self.orient_check = QCheckBox('Automatic orientation using image data')
-        self.orient_check.setChecked(self.auto_orientation)
-        self.orient_check.toggled.connect(self.auto_orient)
+        self.orient_check.setChecked(self.auto_orient)
+        self.orient_check.toggled.connect(self.orient)
         layout.addWidget(self.orient_check, 1, 0, 1, 2)
 
         layout.addWidget(QLabel('<b>Slideshow time delay</b>'), 2, 0, 1, 2)
@@ -92,8 +92,8 @@ class PrefsDialog(QDialog):
         self.resize(200, 250)
         self.show()
 
-    def auto_orient(self):
-        self.auto_orientation = self.orient_check.isChecked()
+    def orient(self):
+        self.auto_orient = self.orient_check.isChecked()
 
 class PropsDialog(QDialog):
     def __init__(self, parent, name, width, height):

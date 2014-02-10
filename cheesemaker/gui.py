@@ -147,7 +147,7 @@ class MainWindow(QMainWindow):
     def set_prefs(self):
         dialog = preferences.PrefsDialog(self)
         if dialog.exec_() == QDialog.Accepted:
-            self.auto_orient = dialog.auto_orientation
+            self.auto_orient = dialog.auto_orient
             self.slide_delay = dialog.delay_spinb.value()
             self.quality = dialog.qual_spinb.value()
             conf = preferences.Config()
@@ -225,9 +225,11 @@ class MainWindow(QMainWindow):
     def zoom_default(self):
         if self.fit_win_act.isChecked():
             self.load_img = self.load_img_fit
+            self.create_dict()
             self.load_img()
         else:
             self.load_img = self.load_img_1to1
+            self.create_dict()
             self.load_img()
 
     def img_rotate(self, angle):
