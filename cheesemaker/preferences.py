@@ -23,6 +23,7 @@ import os
 import configparser
 
 class Config(object):
+    """Read, write / create config file."""
     def __init__(self):
         config_dir = os.environ.get('XDG_CONFIG_HOME') or os.path.expanduser('~/.config')
         self.config_dir = os.path.join(config_dir, 'cheesemaker')
@@ -96,6 +97,7 @@ class PrefsDialog(QDialog):
         self.auto_orient = self.orient_check.isChecked()
 
 class PropsDialog(QDialog):
+    """Dialog displaying basic properties of the image."""
     def __init__(self, parent, name, width, height):
         QDialog.__init__(self, parent)
 
