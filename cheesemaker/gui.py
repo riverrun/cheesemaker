@@ -121,6 +121,7 @@ class MainWindow(QMainWindow):
             self.addAction(act)
 
     def create_dict(self):
+        """Create a dictionary to handle auto-orientation."""
         self.orient_dict = {None: self.load_img,
                 '1': self.load_img,
                 '2': partial(self.img_flip, -1, 1),
@@ -132,6 +133,7 @@ class MainWindow(QMainWindow):
                 '8': partial(self.img_rotate, 270)}
 
     def read_prefs(self):
+        """Parse the preferences from the config file, or set default values."""
         try:
             conf = preferences.Config()
             values = conf.read_config()
@@ -145,6 +147,7 @@ class MainWindow(QMainWindow):
         self.reload_img = self.reload_auto if self.auto_orient else self.reload_nonauto
 
     def set_prefs(self):
+        """Write preferences to the config file."""
         dialog = preferences.PrefsDialog(self)
         if dialog.exec_() == QDialog.Accepted:
             self.auto_orient = dialog.auto_orient
@@ -175,6 +178,7 @@ class MainWindow(QMainWindow):
                 self.action_list = []
 
     def set_img_list(self, dirname):
+        """Create a list of readable images from the current directory."""
         filelist = os.listdir(dirname)
         self.filelist = [os.path.join(dirname, filename) for filename in filelist
                         if filename.lower().endswith(self.readable_list)]
@@ -182,11 +186,13 @@ class MainWindow(QMainWindow):
         self.last_file = len(self.filelist) - 1
 
     def get_img(self):
+        """Get image from filename and create pixmap."""
         image = QImage(self.filename)
         self.pixmap = QPixmap.fromImage(image)
         self.setWindowTitle(self.filename.rsplit('/', 1)[1])
 
     def reload_auto(self):
+        """Load a new image with auto-orientation."""
         self.get_img()
         try:
             orient = GExiv2.Metadata(self.filename)['Exif.Image.Orientation']
@@ -195,16 +201,19 @@ class MainWindow(QMainWindow):
             self.load_img()
 
     def reload_nonauto(self):
+        """Load a new image without auto-orientation."""
         self.get_img()
         self.load_img()
 
     def load_img_fit(self):
+        """Load the image to fit the window."""
         self.scene.clear()
         self.scene.addPixmap(self.pixmap)
         self.scene.setSceneRect(0, 0, self.pixmap.width(), self.pixmap.height())
         self.img_view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
 
     def load_img_1to1(self):
+        """Load the image at its original size."""
         self.scene.clear()
         self.img_view.resetTransform()
         self.scene.addPixmap(self.pixmap)
@@ -223,6 +232,7 @@ class MainWindow(QMainWindow):
         self.reload_img()
 
     def zoom_default(self):
+        """Toggle best fit / original size loading."""
         if self.fit_win_act.isChecked():
             self.load_img = self.load_img_fit
             self.create_dict()
@@ -341,6 +351,7 @@ class MainWindow(QMainWindow):
                 pass
 
     def get_props(self):
+        """Get the properties of the current image."""
         image = QImage(self.filename)
         preferences.PropsDialog(self, self.filename.rsplit('/', 1)[1], image.width(), image.height())
 
@@ -364,6 +375,7 @@ class ImageView(QGraphicsView):
         self.setFrameShape(QFrame.NoFrame)
 
     def mousePressEvent(self, event):
+        """Go to the next / previous image, or be able to drag the image with a hand."""
         if event.button() == Qt.LeftButton:
             x = event.x()
             if x < 100:

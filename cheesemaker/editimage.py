@@ -79,6 +79,7 @@ class ResizeDialog(QDialog):
             self.get_width.blockSignals(False)
 
     def toggle_aspratio(self):
+        """Toggle whether aspect ratio should be preserved."""
         self.pres_aspratio = self.aspratio.isChecked()
 
 class CropDialog(QDialog):
