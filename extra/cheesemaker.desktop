@@ -7,5 +7,5 @@ Exec=cheesemaker
 Name=Cheesemaker
 Comment=Simple image viewer
 Icon=cheesemaker
-Categories=GTK;Graphics;
+Categories=QT;Graphics;
 StartupNotify=True
