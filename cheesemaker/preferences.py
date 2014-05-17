@@ -120,13 +120,9 @@ class HelpDialog(QDialog):
         QDialog.__init__(self, parent)
 
         self.setWindowTitle('Help!')
-
-        try:
-            with open('/usr/share/cheesemaker/help_page') as help_file:
-                text = help_file.read()
-        except:
-            with open('/usr/local/share/cheesemaker/help_page') as help_file:
-                text = help_file.read()
+        base_dir = os.path.abspath(os.path.dirname(__file__))
+        with open(os.path.join(base_dir, 'data', 'help_page')) as help_file:
+            text = help_file.read()
 
         layout = QVBoxLayout()
         self.setLayout(layout)
