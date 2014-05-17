@@ -67,7 +67,7 @@ class MainWindow(QMainWindow):
         self.exit_act = QAction('E&xit', self, shortcut='Ctrl+Q')
         self.exit_act.triggered.connect(self.close)
         self.fulls_act = QAction('Fullscreen', self, shortcut='F11', enabled=False, checkable=True)
-        self.fulls_act.triggered.connect(self.toggle_fullscreen)
+        self.fulls_act.triggered.connect(self.toggle_fs)
         self.ss_act = QAction('Slideshow', self, shortcut='F5', enabled=False, checkable=True)
         self.ss_act.triggered.connect(self.toggle_slideshow)
         self.ss_next_act = QAction('Next / Random image', self, enabled=False, checkable=True)
@@ -103,27 +103,38 @@ class MainWindow(QMainWindow):
 
     def create_menu(self):
         self.popup = QMenu(self)
-        acts1 = [self.open_act, self.reload_act, self.print_act, self.save_act, self.props_act, self.exit_act]
-        acts2 = [self.rotleft_act, self.rotright_act, self.fliph_act, self.flipv_act, self.resize_act, self.crop_act, self.prefs_act]
-        acts3 = [self.next_act, self.prev_act, self.zin_act, self.zout_act, self.fit_win_act, self.fulls_act, self.ss_act, self.ss_next_act]
-        acts4 = [self.help_act, self.about_act, self.aboutQt_act]
-        fileMenu = self.menuBar().addMenu('&File')
-        for act in acts1:
-            fileMenu.addAction(act)
-        editMenu = self.menuBar().addMenu('&Edit')
-        for act in acts2:
-            editMenu.addAction(act)
-        viewMenu = self.menuBar().addMenu('&View')
-        for act in acts3:
-            viewMenu.addAction(act)
-        helpMenu = self.menuBar().addMenu('&Help')
-        for act in acts4:
-            helpMenu.addAction(act)
+        main_acts = [self.open_act, self.reload_act, self.print_act, self.save_act]
+        edit_acts1 = [self.rotleft_act, self.rotright_act, self.fliph_act, self.flipv_act]
+        edit_acts2 = [self.resize_act, self.crop_act]
+        view_acts = [self.next_act, self.prev_act, self.zin_act, self.zout_act, self.fit_win_act, self.fulls_act, self.ss_act, self.ss_next_act]
+        help_acts = [self.help_act, self.about_act, self.aboutQt_act]
+        end_acts = [self.prefs_act, self.props_act, self.exit_act]
+        for act in main_acts:
+            self.popup.addAction(act)
+        edit_menu = QMenu(self.popup)
+        edit_menu.setTitle('&Edit')
+        for act in edit_acts1:
+            edit_menu.addAction(act)
+        edit_menu.addSeparator()
+        for act in edit_acts2:
+            edit_menu.addAction(act)
+        self.popup.addMenu(edit_menu)
+        view_menu = QMenu(self.popup)
+        view_menu.setTitle('&View')
+        for act in view_acts:
+            view_menu.addAction(act)
+        self.popup.addMenu(view_menu)
+        help_menu = QMenu(self.popup)
+        help_menu.setTitle('&Help')
+        for act in help_acts:
+            help_menu.addAction(act)
+        self.popup.addMenu(help_menu)
+        for act in end_acts:
+            self.popup.addAction(act)
 
-        self.action_list = acts1 + acts2 + acts3 + acts4
+        self.action_list = main_acts + edit_acts1 + edit_acts2 + view_acts + help_acts + end_acts
         for act in self.action_list:
             self.addAction(act)
-            self.popup.addAction(act)
 
     def showMenu(self, pos):
         self.popup.popup(self.mapToGlobal(pos))
@@ -284,21 +295,18 @@ class MainWindow(QMainWindow):
             self.load_img()
         self.img_view.rband.hide()
 
-    def toggle_fullscreen(self):
+    def toggle_fs(self):
         if self.fulls_act.isChecked():
             self.showFullScreen()
-            self.menuBar().hide()
         else:
             self.showNormal()
-            self.menuBar().show()
 
     def toggle_slideshow(self):
         if self.ss_act.isChecked():
             self.showFullScreen()
-            self.menuBar().hide()
             self.start_ss()
         else:
-            self.toggle_fullscreen()
+            self.toggle_fs()
             self.timer.stop()
             self.ss_timer.stop()
 
@@ -367,7 +375,7 @@ class MainWindow(QMainWindow):
         preferences.HelpDialog(self)
 
     def about_cm(self):
-        about_message = 'Version: 0.3.3\nAuthor: David Whitlock\nLicense: GPLv3'
+        about_message = 'Version: 0.3.4\nAuthor: David Whitlock\nLicense: GPLv3'
         QMessageBox.about(self, 'About Cheesemaker', about_message)
 
 class ImageView(QGraphicsView):
