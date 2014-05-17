@@ -10,7 +10,7 @@ At the moment, Cheesemaker supports zoom, fullscreen, rotating and
 flipping images, automatic orientation, and resizing and cropping
 images. You can also open images in multiple windows.
 
-There is no toolbar, but you can access the menu by
+There is no menubar or toolbar, but you can access the menu by
 right-clicking on the window. There are also keyboard shortcuts for most
 actions. In addition, you can now access some functions by clicking on
 different parts of the window. For example, if you click near the right
@@ -38,7 +38,7 @@ Qt4 version
 ~~~~~~~~~~~
 
 From version 0.2.5 upto version 0.3.0, this program used PyQt4 (click on
-`releases <https://github.com/riverrun/cheesemaker>`_ 
+`releases <https://github.com/riverrun/cheesemaker/releases>`_ 
 to see the available versions). That version depends
 on python3, python3-pyqt4, python3-gobject (python3-gi), and libgexiv2
 (gir1.2-gexiv2).
@@ -47,7 +47,7 @@ Gtk3 version
 ~~~~~~~~~~~~
 
 Upto version 0.2.5, this program used Gtk 3 (click on
-`releases <https://github.com/riverrun/cheesemaker>`_ 
+`releases <https://github.com/riverrun/cheesemaker/releases>`_ 
 tab to see the available versions). That version depends on python3,
 python3-gobject (python3-gi), gdk-pixbuf2 (gir1.2-gdkpixbuf-2.0) and
 libgexiv2 (gir1.2-gexiv2).
