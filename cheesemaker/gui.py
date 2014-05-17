@@ -20,7 +20,7 @@
 from PyQt5.QtCore import Qt, QDir, QRect, QTimer
 from PyQt5.QtGui import QImage, QPixmap, QTransform, QPainter
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem,
-        QDialog, QFileDialog, QAction, QMessageBox, QFrame, QRubberBand, qApp)
+        QMenu, QDialog, QFileDialog, QAction, QMessageBox, QFrame, QRubberBand, qApp)
 from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
 from gi.repository import GExiv2
 from functools import partial
@@ -46,6 +46,9 @@ class MainWindow(QMainWindow):
         self.create_menu()
         self.create_dict()
         self.slides_next = True
+
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.showMenu)
 
         self.read_prefs()
         self.readable_list = parent.readable_list
@@ -99,6 +102,7 @@ class MainWindow(QMainWindow):
                 triggered=qApp.aboutQt)
 
     def create_menu(self):
+        self.popup = QMenu(self)
         acts1 = [self.open_act, self.reload_act, self.print_act, self.save_act, self.props_act, self.exit_act]
         acts2 = [self.rotleft_act, self.rotright_act, self.fliph_act, self.flipv_act, self.resize_act, self.crop_act, self.prefs_act]
         acts3 = [self.next_act, self.prev_act, self.zin_act, self.zout_act, self.fit_win_act, self.fulls_act, self.ss_act, self.ss_next_act]
@@ -119,7 +123,11 @@ class MainWindow(QMainWindow):
         self.action_list = acts1 + acts2 + acts3 + acts4
         for act in self.action_list:
             self.addAction(act)
+            self.popup.addAction(act)
 
+    def showMenu(self, pos):
+        self.popup.popup(self.mapToGlobal(pos))
+ 
     def create_dict(self):
         """Create a dictionary to handle auto-orientation."""
         self.orient_dict = {None: self.load_img,
@@ -359,7 +367,7 @@ class MainWindow(QMainWindow):
         preferences.HelpDialog(self)
 
     def about_cm(self):
-        about_message = 'Version: 0.3.2\nAuthor: David Whitlock\nLicense: GPLv3'
+        about_message = 'Version: 0.3.3\nAuthor: David Whitlock\nLicense: GPLv3'
         QMessageBox.about(self, 'About Cheesemaker', about_message)
 
 class ImageView(QGraphicsView):

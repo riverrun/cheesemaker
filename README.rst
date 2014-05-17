@@ -10,7 +10,7 @@ At the moment, Cheesemaker supports zoom, fullscreen, rotating and
 flipping images, automatic orientation, and resizing and cropping
 images. You can also open images in multiple windows.
 
-There is no menubar or toolbar, but you can access the menu by
+There is no toolbar, but you can access the menu by
 right-clicking on the window. There are also keyboard shortcuts for most
 actions. In addition, you can now access some functions by clicking on
 different parts of the window. For example, if you click near the right
@@ -28,6 +28,30 @@ the image it will appear the same way.
 The preferences (automatic orientation, slideshow time delay and jpeg
 image quality) are saved for the next time you use Cheesemaker.
 
+Dependencies
+~~~~~~~~~~~~
+
+Cheesemaker depends on python3, python3-pyqt5, python3-gobject
+(python3-gi), and libgexiv2 (gir1.2-gexiv2).
+
+Qt4 version
+~~~~~~~~~~~
+
+From version 0.2.5 upto version 0.3.0, this program used PyQt4 (click on
+`releases <https://github.com/riverrun/cheesemaker>`_ 
+to see the available versions). That version depends
+on python3, python3-pyqt4, python3-gobject (python3-gi), and libgexiv2
+(gir1.2-gexiv2).
+
+Gtk3 version
+~~~~~~~~~~~~
+
+Upto version 0.2.5, this program used Gtk 3 (click on
+`releases <https://github.com/riverrun/cheesemaker>`_ 
+tab to see the available versions). That version depends on python3,
+python3-gobject (python3-gi), gdk-pixbuf2 (gir1.2-gdkpixbuf-2.0) and
+libgexiv2 (gir1.2-gexiv2).
+
 TODO
 ~~~~
 
@@ -36,28 +60,6 @@ TODO
 -  Maybe add more basic editing functionality.
 -  Maybe improve auto-orientation.
 -  Take it easy for a while.
-
-Qt4 version
-~~~~~~~~~~~
-
-From version 0.2.5 upto version 0.3.0, this program used PyQt4 (click on
-the **release** tab to see the available versions). That version depends
-on python3, python3-pyqt4, python3-gobject (python3-gi), and libgexiv2
-(gir1.2-gexiv2).
-
-Gtk3 version
-~~~~~~~~~~~~
-
-Upto version 0.2.5, this program used Gtk 3 (click on the **release**
-tab to see the available versions). That version depends on python3,
-python3-gobject (python3-gi), gdk-pixbuf2 (gir1.2-gdkpixbuf-2.0) and
-libgexiv2 (gir1.2-gexiv2).
-
-Dependencies
-~~~~~~~~~~~~
-
-Cheesemaker depends on python3, python3-pyqt5, python3-gobject
-(python3-gi), and libgexiv2 (gir1.2-gexiv2).
 
 Author
 ~~~~~~
