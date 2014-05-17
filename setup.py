@@ -24,9 +24,12 @@ with open('README.rst') as f:
     long_description = f.read()
 
 def add_data():
-    data_files = [('share/applications', ['extra/cheesemaker.desktop']),
-            ('share/pixmaps', ['extra/cheesemaker.png'])]
-    return data_files
+    try:
+        data_files = [('share/applications', ['extra/cheesemaker.desktop']),
+                ('share/pixmaps', ['extra/cheesemaker.png'])]
+        return data_files
+    except:
+        return
 
 if os.name == 'posix':
     data_files = add_data()
@@ -48,7 +51,7 @@ setup(
     zip_safe=False,
     classifiers=[
         'Development Status :: 4 - Beta',
-        'Environment :: X11 Applications :: QT',
+        'Environment :: X11 Applications :: Qt',
         'Intended Audience :: End Users/Desktop',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
