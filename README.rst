@@ -3,8 +3,8 @@ Cheesemaker
 
 A simple image viewer using Python 3 and Qt5.
 
-What's so special about Cheesemaker?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Features
+~~~~~~~~
 
 At the moment, Cheesemaker supports zoom, fullscreen, rotating and
 flipping images, automatic orientation, and resizing and cropping

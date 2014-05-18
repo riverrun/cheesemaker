@@ -112,6 +112,11 @@ class PropsDialog(QDialog):
         layout.addWidget(QLabel('<b>Height</b>'), 2, 0, 1, 1)
         layout.addWidget(QLabel(str(height)), 2, 1, 1, 1)
 
+        buttons = QDialogButtonBox(QDialogButtonBox.Close)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
         self.resize(200, 100)
         self.show()
 
@@ -132,5 +137,11 @@ class HelpDialog(QDialog):
         scrollwin = QScrollArea()
         scrollwin.setWidget(label)
         layout.addWidget(scrollwin)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Close)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
         self.resize(650, 500)
         self.show()
