@@ -37,6 +37,8 @@ class MainWindow(QMainWindow):
         self.printer = QPrinter()
         self.load_img = self.load_img_fit
         self.reload_img = self.reload_auto
+        self.open_new = parent.open_win
+        self.exit = parent.closeAllWindows
         self.scene = QGraphicsScene()
         self.img_view = ImageView(self)
         self.img_view.setScene(self.scene)
@@ -58,14 +60,18 @@ class MainWindow(QMainWindow):
     def create_actions(self):
         self.open_act = QAction('&Open', self, shortcut='Ctrl+O')
         self.open_act.triggered.connect(self.open)
+        self.open_new_act = QAction('Open new window', self, shortcut='Ctrl+Shift+O')
+        self.open_new_act.triggered.connect(partial(self.open, True))
         self.reload_act = QAction('&Reload image', self, shortcut='Ctrl+R', enabled=False)
         self.reload_act.triggered.connect(self.reload_img)
         self.print_act = QAction('&Print', self, shortcut='Ctrl+P', enabled=False)
         self.print_act.triggered.connect(self.print_img)
         self.save_act = QAction('&Save image', self, shortcut='Ctrl+S', enabled=False)
         self.save_act.triggered.connect(self.save_img)
+        self.close_act = QAction('Close window', self, shortcut='Ctrl+W')
+        self.close_act.triggered.connect(self.close)
         self.exit_act = QAction('E&xit', self, shortcut='Ctrl+Q')
-        self.exit_act.triggered.connect(self.close)
+        self.exit_act.triggered.connect(self.exit)
         self.fulls_act = QAction('Fullscreen', self, shortcut='F11', enabled=False, checkable=True)
         self.fulls_act.triggered.connect(self.toggle_fs)
         self.ss_act = QAction('Slideshow', self, shortcut='F5', enabled=False, checkable=True)
@@ -103,12 +109,12 @@ class MainWindow(QMainWindow):
 
     def create_menu(self):
         self.popup = QMenu(self)
-        main_acts = [self.open_act, self.reload_act, self.print_act, self.save_act]
+        main_acts = [self.open_act, self.open_new_act, self.reload_act, self.print_act, self.save_act]
         edit_acts1 = [self.rotleft_act, self.rotright_act, self.fliph_act, self.flipv_act]
         edit_acts2 = [self.resize_act, self.crop_act]
         view_acts = [self.next_act, self.prev_act, self.zin_act, self.zout_act, self.fit_win_act, self.fulls_act, self.ss_act, self.ss_next_act]
         help_acts = [self.help_act, self.about_act, self.aboutQt_act]
-        end_acts = [self.prefs_act, self.props_act, self.exit_act]
+        end_acts = [self.prefs_act, self.props_act, self.close_act, self.exit_act]
         for act in main_acts:
             self.popup.addAction(act)
         edit_menu = QMenu(self.popup)
@@ -176,12 +182,15 @@ class MainWindow(QMainWindow):
             conf.write_config(self.auto_orient, self.slide_delay, self.quality)
         self.reload_img = self.reload_auto if self.auto_orient else self.reload_nonauto
 
-    def open(self):
+    def open(self, new_win=False):
         filename = QFileDialog.getOpenFileName(self, 'Open File',
                 QDir.currentPath())
         if filename:
             if filename[0].lower().endswith(self.readable_list):
-                self.open_img(filename[0])
+                if new_win:
+                    self.open_new(filename[0])
+                else:
+                    self.open_img(filename[0])
             else:
                 QMessageBox.information(self, 'Error', 'Cannot load {} images.'.format(filename.rsplit('.', 1)[1]))
 
@@ -375,7 +384,7 @@ class MainWindow(QMainWindow):
         preferences.HelpDialog(self)
 
     def about_cm(self):
-        about_message = 'Version: 0.3.4\nAuthor: David Whitlock\nLicense: GPLv3'
+        about_message = 'Version: 0.3.5\nAuthor: David Whitlock\nLicense: GPLv3'
         QMessageBox.about(self, 'About Cheesemaker', about_message)
 
 class ImageView(QGraphicsView):
