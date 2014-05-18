@@ -38,7 +38,7 @@ else:
 
 setup(
     name = 'cheesemaker',
-    version = '0.3.4',
+    version = '0.3.5',
     author='David Whitlock',
     author_email='alovedalongthe@gmail.com',
     url = 'https://github.com/riverrun/cheesemaker',
