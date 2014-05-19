@@ -55,6 +55,7 @@ class MainWindow(QMainWindow):
         self.read_prefs()
         self.readable_list = parent.readable_list
         self.writeable_list = ('bmp', 'jpg', 'jpeg', 'png', 'ppm', 'tif', 'tiff', 'xbm', 'xpm')
+        self.pics_dir = os.path.expanduser('~/Pictures') or QDir.currentPath()
         self.resize(700, 500)
 
     def create_actions(self):
@@ -183,23 +184,22 @@ class MainWindow(QMainWindow):
         self.reload_img = self.reload_auto if self.auto_orient else self.reload_nonauto
 
     def open(self, new_win=False):
-        filename = QFileDialog.getOpenFileName(self, 'Open File',
-                QDir.currentPath())
-        if filename:
-            if filename[0].lower().endswith(self.readable_list):
+        fname = QFileDialog.getOpenFileName(self, 'Open File', self.pics_dir)[0]
+        if fname:
+            if fname.lower().endswith(self.readable_list):
                 if new_win:
-                    self.open_new(filename[0])
+                    self.open_new(fname)
                 else:
-                    self.open_img(filename[0])
+                    self.open_img(fname)
             else:
-                QMessageBox.information(self, 'Error', 'Cannot load {} images.'.format(filename.rsplit('.', 1)[1]))
+                QMessageBox.information(self, 'Error', 'Cannot load {} images.'.format(fname.rsplit('.', 1)[1]))
 
-    def open_img(self, filename):
-        self.filename = filename
+    def open_img(self, fname):
+        self.fname = fname
         self.reload_img()
-        dirname = os.path.dirname(self.filename)
+        dirname = os.path.dirname(self.fname)
         self.set_img_list(dirname)
-        self.img_index = self.filelist.index(self.filename)
+        self.img_index = self.filelist.index(self.fname)
         if self.action_list:
             for act in self.action_list:
                 act.setEnabled(True)
@@ -208,22 +208,22 @@ class MainWindow(QMainWindow):
     def set_img_list(self, dirname):
         """Create a list of readable images from the current directory."""
         filelist = os.listdir(dirname)
-        self.filelist = [os.path.join(dirname, filename) for filename in filelist
-                        if filename.lower().endswith(self.readable_list)]
+        self.filelist = [os.path.join(dirname, fname) for fname in filelist
+                        if fname.lower().endswith(self.readable_list)]
         self.filelist.sort()
         self.last_file = len(self.filelist) - 1
 
     def get_img(self):
-        """Get image from filename and create pixmap."""
-        image = QImage(self.filename)
+        """Get image from fname and create pixmap."""
+        image = QImage(self.fname)
         self.pixmap = QPixmap.fromImage(image)
-        self.setWindowTitle(self.filename.rsplit('/', 1)[1])
+        self.setWindowTitle(self.fname.rsplit('/', 1)[1])
 
     def reload_auto(self):
         """Load a new image with auto-orientation."""
         self.get_img()
         try:
-            orient = GExiv2.Metadata(self.filename)['Exif.Image.Orientation']
+            orient = GExiv2.Metadata(self.fname)['Exif.Image.Orientation']
             self.orient_dict[orient]()
         except:
             self.load_img()
@@ -251,12 +251,12 @@ class MainWindow(QMainWindow):
 
     def go_next_img(self):
         self.img_index = self.img_index + 1 if self.img_index < self.last_file else 0
-        self.filename = self.filelist[self.img_index]
+        self.fname = self.filelist[self.img_index]
         self.reload_img()
 
     def go_prev_img(self):
         self.img_index = self.img_index - 1 if self.img_index else self.last_file
-        self.filename = self.filelist[self.img_index]
+        self.fname = self.filelist[self.img_index]
         self.reload_img()
 
     def zoom_default(self):
@@ -331,7 +331,7 @@ class MainWindow(QMainWindow):
         if self.slides_next:
             self.go_next_img()
         else:
-            self.filename = random.choice(self.filelist)
+            self.fname = random.choice(self.filelist)
             self.reload_img()
 
     def set_slide_type(self):
@@ -343,19 +343,19 @@ class MainWindow(QMainWindow):
         self.inhibit_method = ss.get_dbus_method('SimulateUserActivity','org.freedesktop.ScreenSaver')
 
     def save_img(self):
-        filename = QFileDialog.getSaveFileName(self, 'Save your image', self.filename)
-        if filename:
-            if filename[0].lower().endswith(self.writeable_list):
-                self.pixmap.save(filename[0], None, self.quality)
-                exif = GExiv2.Metadata(self.filename)
+        fname = QFileDialog.getSaveFileName(self, 'Save your image', self.fname)[0]
+        if fname:
+            if fname.lower().endswith(self.writeable_list):
+                self.pixmap.save(fname, None, self.quality)
+                exif = GExiv2.Metadata(self.fname)
                 if exif:
-                    saved_exif = GExiv2.Metadata(filename[0])
+                    saved_exif = GExiv2.Metadata(fname)
                     for tag in exif.get_exif_tags():
                         saved_exif[tag] = exif[tag]
                     saved_exif.set_orientation(GExiv2.Orientation.NORMAL)
                     saved_exif.save_file()
             else:
-                QMessageBox.information(self, 'Error', 'Cannot save {} images.'.format(filename[0].rsplit('.', 1)[1]))
+                QMessageBox.information(self, 'Error', 'Cannot save {} images.'.format(fname.rsplit('.', 1)[1]))
 
     def print_img(self):
         dialog = QPrintDialog(self.printer, self)
@@ -377,14 +377,14 @@ class MainWindow(QMainWindow):
 
     def get_props(self):
         """Get the properties of the current image."""
-        image = QImage(self.filename)
-        preferences.PropsDialog(self, self.filename.rsplit('/', 1)[1], image.width(), image.height())
+        image = QImage(self.fname)
+        preferences.PropsDialog(self, self.fname.rsplit('/', 1)[1], image.width(), image.height())
 
     def help_page(self):
         preferences.HelpDialog(self)
 
     def about_cm(self):
-        about_message = 'Version: 0.3.5\nAuthor: David Whitlock\nLicense: GPLv3'
+        about_message = 'Version: 0.3.6\nAuthor: David Whitlock\nLicense: GPLv3'
         QMessageBox.about(self, 'About Cheesemaker', about_message)
 
 class ImageView(QGraphicsView):
@@ -459,15 +459,15 @@ class ImageViewer(QApplication):
             self.open_win(None)
 
     def open_files(self, files):
-        for filename in files:
-            if filename.lower().endswith(self.readable_list):
-                self.open_win(filename)
+        for fname in files:
+            if fname.lower().endswith(self.readable_list):
+                self.open_win(fname)
 
-    def open_win(self, filename):
+    def open_win(self, fname):
         win = MainWindow(self)
         win.show()
-        if filename:
-            win.open_img(filename)
+        if fname:
+            win.open_img(fname)
 
 def main():
     app = ImageViewer(sys.argv)
