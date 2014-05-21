@@ -31,7 +31,7 @@ image quality) are saved for the next time you use Cheesemaker.
 Dependencies
 ~~~~~~~~~~~~
 
-Cheesemaker depends on python3, python3-pyqt5, python3-gobject
+Cheesemaker depends on python3, python3-pyqt5, python3-pyqt5.qtsvg, python3-gobject
 (python3-gi), and libgexiv2 (gir1.2-gexiv2).
 
 Qt4 version
