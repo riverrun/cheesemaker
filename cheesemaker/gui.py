@@ -26,7 +26,6 @@ from gi.repository import GExiv2
 from functools import partial
 import os
 import sys
-import dbus
 import random
 from . import preferences, editimage
 
@@ -55,6 +54,7 @@ class MainWindow(QMainWindow):
         self.read_prefs()
         self.readable_list = parent.readable_list
         self.writeable_list = ('bmp', 'jpg', 'jpeg', 'png', 'ppm', 'tif', 'tiff', 'xbm', 'xpm')
+        self.pics_dir = os.path.expanduser('~/Pictures') or QDir.currentPath()
         self.resize(700, 500)
 
     def create_actions(self):
@@ -62,43 +62,43 @@ class MainWindow(QMainWindow):
         self.open_act.triggered.connect(self.open)
         self.open_new_act = QAction('Open new window', self, shortcut='Ctrl+Shift+O')
         self.open_new_act.triggered.connect(partial(self.open, True))
-        self.reload_act = QAction('&Reload image', self, shortcut='Ctrl+R', enabled=False)
+        self.reload_act = QAction('&Reload image', self, shortcut='Ctrl+R')
         self.reload_act.triggered.connect(self.reload_img)
-        self.print_act = QAction('&Print', self, shortcut='Ctrl+P', enabled=False)
+        self.print_act = QAction('&Print', self, shortcut='Ctrl+P')
         self.print_act.triggered.connect(self.print_img)
-        self.save_act = QAction('&Save image', self, shortcut='Ctrl+S', enabled=False)
+        self.save_act = QAction('&Save image', self, shortcut='Ctrl+S')
         self.save_act.triggered.connect(self.save_img)
         self.close_act = QAction('Close window', self, shortcut='Ctrl+W')
         self.close_act.triggered.connect(self.close)
         self.exit_act = QAction('E&xit', self, shortcut='Ctrl+Q')
         self.exit_act.triggered.connect(self.exit)
-        self.fulls_act = QAction('Fullscreen', self, shortcut='F11', enabled=False, checkable=True)
+        self.fulls_act = QAction('Fullscreen', self, shortcut='F11', checkable=True)
         self.fulls_act.triggered.connect(self.toggle_fs)
-        self.ss_act = QAction('Slideshow', self, shortcut='F5', enabled=False, checkable=True)
+        self.ss_act = QAction('Slideshow', self, shortcut='F5', checkable=True)
         self.ss_act.triggered.connect(self.toggle_slideshow)
-        self.ss_next_act = QAction('Next / Random image', self, enabled=False, checkable=True)
+        self.ss_next_act = QAction('Next / Random image', self, checkable=True)
         self.ss_next_act.triggered.connect(self.set_slide_type)
         self.ss_next_act.setChecked(True)
-        self.next_act = QAction('Next image', self, shortcut='Right', enabled=False)
+        self.next_act = QAction('Next image', self, shortcut='Right')
         self.next_act.triggered.connect(self.go_next_img)
-        self.prev_act = QAction('Previous image', self, shortcut='Left', enabled=False)
+        self.prev_act = QAction('Previous image', self, shortcut='Left')
         self.prev_act.triggered.connect(self.go_prev_img)
-        self.rotleft_act = QAction('Rotate left', self, shortcut='Ctrl+Left', enabled=False)
+        self.rotleft_act = QAction('Rotate left', self, shortcut='Ctrl+Left')
         self.rotleft_act.triggered.connect(partial(self.img_rotate, 270))
-        self.rotright_act = QAction('Rotate right', self, shortcut='Ctrl+Right', enabled=False)
+        self.rotright_act = QAction('Rotate right', self, shortcut='Ctrl+Right')
         self.rotright_act.triggered.connect(partial(self.img_rotate, 90))
-        self.fliph_act = QAction('Flip image horizontally', self, shortcut='Ctrl+H', enabled=False)
+        self.fliph_act = QAction('Flip image horizontally', self, shortcut='Ctrl+H')
         self.fliph_act.triggered.connect(partial(self.img_flip, -1, 1))
-        self.flipv_act = QAction('Flip image vertically', self, shortcut='Ctrl+V', enabled=False)
+        self.flipv_act = QAction('Flip image vertically', self, shortcut='Ctrl+V')
         self.flipv_act.triggered.connect(partial(self.img_flip, 1, -1))
-        self.resize_act = QAction('Resize image', self, enabled=False, triggered=self.resize_img)
-        self.crop_act = QAction('Crop image', self, enabled=False, triggered=self.crop_img)
-        self.zin_act = QAction('Zoom &In', self, shortcut='Up', enabled=False)
+        self.resize_act = QAction('Resize image', self, triggered=self.resize_img)
+        self.crop_act = QAction('Crop image', self, triggered=self.crop_img)
+        self.zin_act = QAction('Zoom &In', self, shortcut='Up')
         self.zin_act.triggered.connect(partial(self.img_view.zoom, 1.1))
-        self.zout_act = QAction('Zoom &Out', self, shortcut='Down', enabled=False)
+        self.zout_act = QAction('Zoom &Out', self, shortcut='Down')
         self.zout_act.triggered.connect(partial(self.img_view.zoom, 1 / 1.1))
         self.fit_win_act = QAction('Best &fit', self, checkable=True, shortcut='F',
-                enabled=False, triggered=self.zoom_default)
+                triggered=self.zoom_default)
         self.fit_win_act.setChecked(True)
         self.prefs_act = QAction('Preferences', self, triggered=self.set_prefs)
         self.props_act = QAction('Properties', self, triggered=self.get_props)
@@ -183,47 +183,42 @@ class MainWindow(QMainWindow):
         self.reload_img = self.reload_auto if self.auto_orient else self.reload_nonauto
 
     def open(self, new_win=False):
-        filename = QFileDialog.getOpenFileName(self, 'Open File',
-                QDir.currentPath())
-        if filename:
-            if filename[0].lower().endswith(self.readable_list):
+        fname = QFileDialog.getOpenFileName(self, 'Open File', self.pics_dir)[0]
+        if fname:
+            if fname.lower().endswith(self.readable_list):
                 if new_win:
-                    self.open_new(filename[0])
+                    self.open_new(fname)
                 else:
-                    self.open_img(filename[0])
+                    self.open_img(fname)
             else:
-                QMessageBox.information(self, 'Error', 'Cannot load {} images.'.format(filename.rsplit('.', 1)[1]))
+                QMessageBox.information(self, 'Error', 'Cannot load {} images.'.format(fname.rsplit('.', 1)[1]))
 
-    def open_img(self, filename):
-        self.filename = filename
+    def open_img(self, fname):
+        self.fname = fname
         self.reload_img()
-        dirname = os.path.dirname(self.filename)
+        dirname = os.path.dirname(self.fname)
         self.set_img_list(dirname)
-        self.img_index = self.filelist.index(self.filename)
-        if self.action_list:
-            for act in self.action_list:
-                act.setEnabled(True)
-                self.action_list = []
+        self.img_index = self.filelist.index(self.fname)
 
     def set_img_list(self, dirname):
         """Create a list of readable images from the current directory."""
         filelist = os.listdir(dirname)
-        self.filelist = [os.path.join(dirname, filename) for filename in filelist
-                        if filename.lower().endswith(self.readable_list)]
+        self.filelist = [os.path.join(dirname, fname) for fname in filelist
+                        if fname.lower().endswith(self.readable_list)]
         self.filelist.sort()
         self.last_file = len(self.filelist) - 1
 
     def get_img(self):
-        """Get image from filename and create pixmap."""
-        image = QImage(self.filename)
+        """Get image from fname and create pixmap."""
+        image = QImage(self.fname)
         self.pixmap = QPixmap.fromImage(image)
-        self.setWindowTitle(self.filename.rsplit('/', 1)[1])
+        self.setWindowTitle(self.fname.rsplit('/', 1)[1])
 
     def reload_auto(self):
         """Load a new image with auto-orientation."""
         self.get_img()
         try:
-            orient = GExiv2.Metadata(self.filename)['Exif.Image.Orientation']
+            orient = GExiv2.Metadata(self.fname)['Exif.Image.Orientation']
             self.orient_dict[orient]()
         except:
             self.load_img()
@@ -251,12 +246,12 @@ class MainWindow(QMainWindow):
 
     def go_next_img(self):
         self.img_index = self.img_index + 1 if self.img_index < self.last_file else 0
-        self.filename = self.filelist[self.img_index]
+        self.fname = self.filelist[self.img_index]
         self.reload_img()
 
     def go_prev_img(self):
         self.img_index = self.img_index - 1 if self.img_index else self.last_file
-        self.filename = self.filelist[self.img_index]
+        self.fname = self.filelist[self.img_index]
         self.reload_img()
 
     def zoom_default(self):
@@ -331,31 +326,26 @@ class MainWindow(QMainWindow):
         if self.slides_next:
             self.go_next_img()
         else:
-            self.filename = random.choice(self.filelist)
+            self.fname = random.choice(self.filelist)
             self.reload_img()
 
     def set_slide_type(self):
         self.slides_next = self.ss_next_act.isChecked()
 
-    def inhibit_screensaver(self):
-        bus = dbus.SessionBus()
-        ss = bus.get_object('org.freedesktop.ScreenSaver','/ScreenSaver')
-        self.inhibit_method = ss.get_dbus_method('SimulateUserActivity','org.freedesktop.ScreenSaver')
-
     def save_img(self):
-        filename = QFileDialog.getSaveFileName(self, 'Save your image', self.filename)
-        if filename:
-            if filename[0].lower().endswith(self.writeable_list):
-                self.pixmap.save(filename[0], None, self.quality)
-                exif = GExiv2.Metadata(self.filename)
+        fname = QFileDialog.getSaveFileName(self, 'Save your image', self.fname)[0]
+        if fname:
+            if fname.lower().endswith(self.writeable_list):
+                self.pixmap.save(fname, None, self.quality)
+                exif = GExiv2.Metadata(self.fname)
                 if exif:
-                    saved_exif = GExiv2.Metadata(filename[0])
+                    saved_exif = GExiv2.Metadata(fname)
                     for tag in exif.get_exif_tags():
                         saved_exif[tag] = exif[tag]
                     saved_exif.set_orientation(GExiv2.Orientation.NORMAL)
                     saved_exif.save_file()
             else:
-                QMessageBox.information(self, 'Error', 'Cannot save {} images.'.format(filename[0].rsplit('.', 1)[1]))
+                QMessageBox.information(self, 'Error', 'Cannot save {} images.'.format(fname.rsplit('.', 1)[1]))
 
     def print_img(self):
         dialog = QPrintDialog(self.printer, self)
@@ -377,14 +367,14 @@ class MainWindow(QMainWindow):
 
     def get_props(self):
         """Get the properties of the current image."""
-        image = QImage(self.filename)
-        preferences.PropsDialog(self, self.filename.rsplit('/', 1)[1], image.width(), image.height())
+        image = QImage(self.fname)
+        preferences.PropsDialog(self, self.fname.rsplit('/', 1)[1], image.width(), image.height())
 
     def help_page(self):
         preferences.HelpDialog(self)
 
     def about_cm(self):
-        about_message = 'Version: 0.3.5\nAuthor: David Whitlock\nLicense: GPLv3'
+        about_message = 'Version: 0.3.7\nAuthor: David Whitlock\nLicense: GPLv3'
         QMessageBox.about(self, 'About Cheesemaker', about_message)
 
 class ImageView(QGraphicsView):
@@ -459,15 +449,17 @@ class ImageViewer(QApplication):
             self.open_win(None)
 
     def open_files(self, files):
-        for filename in files:
-            if filename.lower().endswith(self.readable_list):
-                self.open_win(filename)
+        for fname in files:
+            if fname.lower().endswith(self.readable_list):
+                self.open_win(fname)
 
-    def open_win(self, filename):
+    def open_win(self, fname):
         win = MainWindow(self)
         win.show()
-        if filename:
-            win.open_img(filename)
+        if fname:
+            win.open_img(fname)
+        else:
+            win.open()
 
 def main():
     app = ImageViewer(sys.argv)

@@ -1,7 +1,7 @@
 Cheesemaker
 ===========
 
-A simple image viewer using Python 3 and Qt5.
+A minimalistic image viewer using Python3 and Qt5.
 
 Features
 ~~~~~~~~

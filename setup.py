@@ -38,11 +38,11 @@ else:
 
 setup(
     name = 'cheesemaker',
-    version = '0.3.5',
+    version = '0.3.7',
     author='David Whitlock',
     author_email='alovedalongthe@gmail.com',
     url = 'https://github.com/riverrun/cheesemaker',
-    description = 'An image viewer',
+    description = 'A minimalistic image viewer using Python3 and PyQt5',
     long_description=long_description,
     license='GPLv3',
     packages = ['cheesemaker'],
