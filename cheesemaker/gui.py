@@ -352,6 +352,8 @@ class MainWindow(QMainWindow):
         if dialog.exec_():
             painter = QPainter(self.printer)
             rect = painter.viewport()
+            if self.pixmap.width() > self.pixmap.height():
+                self.pixmap = self.pixmap.transformed(QTransform().rotate(90))
             size = self.pixmap.size()
             size.scale(rect.size(), Qt.KeepAspectRatio)
             painter.setViewport(rect.x(), rect.y(), size.width(), size.height())
