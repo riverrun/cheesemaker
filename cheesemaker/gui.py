@@ -52,8 +52,8 @@ class MainWindow(QMainWindow):
         self.customContextMenuRequested.connect(self.showMenu)
 
         self.read_prefs()
-        self.readable_list = parent.readable_list
-        self.writeable_list = ('bmp', 'jpg', 'jpeg', 'png', 'ppm', 'tif', 'tiff', 'xbm', 'xpm')
+        self.read_list = parent.read_list
+        self.write_list = parent.write_list
         self.pics_dir = os.path.expanduser('~/Pictures') or QDir.currentPath()
         self.resize(700, 500)
 
@@ -185,7 +185,7 @@ class MainWindow(QMainWindow):
     def open(self, new_win=False):
         fname = QFileDialog.getOpenFileName(self, 'Open File', self.pics_dir)[0]
         if fname:
-            if fname.lower().endswith(self.readable_list):
+            if fname.lower().endswith(self.read_list):
                 if new_win:
                     self.open_new(fname)
                 else:
@@ -204,7 +204,7 @@ class MainWindow(QMainWindow):
         """Create a list of readable images from the current directory."""
         filelist = os.listdir(dirname)
         self.filelist = [os.path.join(dirname, fname) for fname in filelist
-                        if fname.lower().endswith(self.readable_list)]
+                        if fname.lower().endswith(self.read_list)]
         self.filelist.sort()
         self.last_file = len(self.filelist) - 1
 
@@ -335,7 +335,7 @@ class MainWindow(QMainWindow):
     def save_img(self):
         fname = QFileDialog.getSaveFileName(self, 'Save your image', self.fname)[0]
         if fname:
-            if fname.lower().endswith(self.writeable_list):
+            if fname.lower().endswith(self.write_list):
                 self.pixmap.save(fname, None, self.quality)
                 exif = GExiv2.Metadata(self.fname)
                 if exif:
@@ -376,7 +376,7 @@ class MainWindow(QMainWindow):
         preferences.HelpDialog(self)
 
     def about_cm(self):
-        about_message = 'Version: 0.3.7\nAuthor: David Whitlock\nLicense: GPLv3'
+        about_message = 'Version: 0.3.8\nAuthor: David Whitlock\nLicense: GPLv3'
         QMessageBox.about(self, 'About Cheesemaker', about_message)
 
 class ImageView(QGraphicsView):
@@ -440,8 +440,11 @@ class ImageViewer(QApplication):
         QApplication.__init__(self, args)
 
         self.args = args
-        self.readable_list = ('bmp', 'gif', 'jpg', 'jpeg', 'mng', 'png', 'pbm',
-                'pgm', 'ppm', 'tif', 'tiff', 'xbm', 'xpm', 'svg', 'tga')
+        self.read_list = ('bmp', 'gif', 'ico', 'jpg', 'jpeg', 'png', 'pbm',
+                'pgm', 'ppm', 'xbm', 'xpm', 'svg', 'svgz', 'mng', 'wbmp',
+                'tga', 'tif', 'tiff')
+        self.write_list = ('bmp', 'ico', 'jpg', 'jpeg', 'pbm', 'pgm', 'png',
+                'wbmp', 'tif', 'tiff', 'ppm', 'xbm', 'xpm')
 
     def startup(self):
         if len(self.args) > 1:
@@ -452,7 +455,7 @@ class ImageViewer(QApplication):
 
     def open_files(self, files):
         for fname in files:
-            if fname.lower().endswith(self.readable_list):
+            if fname.lower().endswith(self.read_list):
                 self.open_win(fname)
 
     def open_win(self, fname):
