@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-
 # Authors: David Whitlock <alovedalongthe@gmail.com>
-# A simple image viewer
-# Copyright (C) 2013 David Whitlock
+# A minimalistic image viewer
+# Copyright (C) 2013-2014 David Whitlock
 #
 # Cheesemaker is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -336,14 +334,18 @@ class MainWindow(QMainWindow):
         fname = QFileDialog.getSaveFileName(self, 'Save your image', self.fname)[0]
         if fname:
             if fname.lower().endswith(self.write_list):
-                self.pixmap.save(fname, None, self.quality)
-                exif = GExiv2.Metadata(self.fname)
-                if exif:
-                    saved_exif = GExiv2.Metadata(fname)
-                    for tag in exif.get_exif_tags():
-                        saved_exif[tag] = exif[tag]
-                    saved_exif.set_orientation(GExiv2.Orientation.NORMAL)
-                    saved_exif.save_file()
+                keep_exif = QMessageBox.question(self, 'Save exif data',
+                        'Do you want to save the picture metadata?', QMessageBox.Yes |
+                        QMessageBox.No, QMessageBox.Yes)
+                if keep_exif == QMessageBox.Yes:
+                    self.pixmap.save(fname, None, self.quality)
+                    exif = GExiv2.Metadata(self.fname)
+                    if exif:
+                        saved_exif = GExiv2.Metadata(fname)
+                        for tag in exif.get_exif_tags():
+                            saved_exif[tag] = exif[tag]
+                        saved_exif.set_orientation(GExiv2.Orientation.NORMAL)
+                        saved_exif.save_file()
             else:
                 QMessageBox.information(self, 'Error', 'Cannot save {} images.'.format(fname.rsplit('.', 1)[1]))
 
@@ -376,7 +378,7 @@ class MainWindow(QMainWindow):
         preferences.HelpDialog(self)
 
     def about_cm(self):
-        about_message = 'Version: 0.3.8\nAuthor: David Whitlock\nLicense: GPLv3'
+        about_message = 'Version: 0.3.9\nAuthor: David Whitlock\nLicense: GPLv3'
         QMessageBox.about(self, 'About Cheesemaker', about_message)
 
 class ImageView(QGraphicsView):

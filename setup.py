@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-
 # Authors: David Whitlock <alovedalongthe@gmail.com>
-# A simple image viewer
+# A minimalistic image viewer
 # Copyright (C) 2013-2014 David Whitlock
 #
 # Cheesemaker is free software: you can redistribute it and/or modify
@@ -38,7 +36,7 @@ else:
 
 setup(
     name = 'cheesemaker',
-    version = '0.3.8',
+    version = '0.3.9',
     author='David Whitlock',
     author_email='alovedalongthe@gmail.com',
     url = 'https://github.com/riverrun/cheesemaker',
