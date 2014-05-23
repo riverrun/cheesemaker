@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-
 # Authors: David Whitlock <alovedalongthe@gmail.com>
-# A simple image viewer
-# Copyright (C) 2013 David Whitlock
+# A minimalistic image viewer
+# Copyright (C) 2013-2014 David Whitlock
 #
 # Cheesemaker is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
