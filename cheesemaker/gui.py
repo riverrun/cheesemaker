@@ -206,15 +206,10 @@ class MainWindow(QMainWindow):
         self.filelist.sort()
         self.last_file = len(self.filelist) - 1
 
-    def get_img(self):
-        """Get image from fname and create pixmap."""
-        image = QImage(self.fname)
-        self.pixmap = QPixmap.fromImage(image)
-        self.setWindowTitle(self.fname.rsplit('/', 1)[1])
-
     def reload_auto(self):
         """Load a new image with auto-orientation."""
-        self.get_img()
+        self.pix = QPixmap(self.fname)
+        self.setWindowTitle(self.fname.rsplit('/', 1)[1])
         try:
             orient = GExiv2.Metadata(self.fname)['Exif.Image.Orientation']
             self.orient_dict[orient]()
@@ -223,23 +218,24 @@ class MainWindow(QMainWindow):
 
     def reload_nonauto(self):
         """Load a new image without auto-orientation."""
-        self.get_img()
+        self.pix = QPixmap(self.fname)
+        self.setWindowTitle(self.fname.rsplit('/', 1)[1])
         self.load_img()
 
     def load_img_fit(self):
         """Load the image to fit the window."""
         self.scene.clear()
-        self.scene.addPixmap(self.pixmap)
-        self.scene.setSceneRect(0, 0, self.pixmap.width(), self.pixmap.height())
+        self.scene.addPixmap(self.pix)
+        self.scene.setSceneRect(0, 0, self.pix.width(), self.pix.height())
         self.img_view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
 
     def load_img_1to1(self):
         """Load the image at its original size."""
         self.scene.clear()
         self.img_view.resetTransform()
-        self.scene.addPixmap(self.pixmap)
-        self.scene.setSceneRect(0, 0, self.pixmap.width(), self.pixmap.height())
-        pixitem = QGraphicsPixmapItem(self.pixmap)
+        self.scene.addPixmap(self.pix)
+        self.scene.setSceneRect(0, 0, self.pix.width(), self.pix.height())
+        pixitem = QGraphicsPixmapItem(self.pix)
         self.img_view.centerOn(pixitem)
 
     def go_next_img(self):
@@ -264,11 +260,11 @@ class MainWindow(QMainWindow):
             self.load_img()
 
     def img_rotate(self, angle):
-        self.pixmap = self.pixmap.transformed(QTransform().rotate(angle))
+        self.pix = self.pix.transformed(QTransform().rotate(angle))
         self.load_img()
 
     def img_flip(self, x, y):
-        self.pixmap = self.pixmap.transformed(QTransform().scale(x, y))
+        self.pix = self.pix.transformed(QTransform().scale(x, y))
         self.load_img()
 
     def img_rotate_fliph(self):
@@ -280,20 +276,20 @@ class MainWindow(QMainWindow):
         self.img_flip(1, -1)
 
     def resize_img(self):
-        dialog = editimage.ResizeDialog(self, self.pixmap.width(), self.pixmap.height())
+        dialog = editimage.ResizeDialog(self, self.pix.width(), self.pix.height())
         if dialog.exec_() == QDialog.Accepted:
             width = dialog.get_width.value()
             height = dialog.get_height.value()
-            self.pixmap = self.pixmap.scaled(width, height, Qt.IgnoreAspectRatio,
+            self.pix = self.pix.scaled(width, height, Qt.IgnoreAspectRatio,
                     Qt.SmoothTransformation)
             self.save_img()
 
     def crop_img(self):
-        self.img_view.setup_crop(self.pixmap.width(), self.pixmap.height())
-        dialog = editimage.CropDialog(self, self.pixmap.width(), self.pixmap.height())
+        self.img_view.setup_crop(self.pix.width(), self.pix.height())
+        dialog = editimage.CropDialog(self, self.pix.width(), self.pix.height())
         if dialog.exec_() == QDialog.Accepted:
             coords = self.img_view.get_coords()
-            self.pixmap = self.pixmap.copy(*coords)
+            self.pix = self.pix.copy(*coords)
             self.load_img()
         self.img_view.rband.hide()
 
@@ -338,7 +334,7 @@ class MainWindow(QMainWindow):
                         'Do you want to save the picture metadata?', QMessageBox.Yes |
                         QMessageBox.No, QMessageBox.Yes)
                 if keep_exif == QMessageBox.Yes:
-                    self.pixmap.save(fname, None, self.quality)
+                    self.pix.save(fname, None, self.quality)
                     exif = GExiv2.Metadata(self.fname)
                     if exif:
                         saved_exif = GExiv2.Metadata(fname)
@@ -354,13 +350,13 @@ class MainWindow(QMainWindow):
         if dialog.exec_():
             painter = QPainter(self.printer)
             rect = painter.viewport()
-            if self.pixmap.width() > self.pixmap.height():
-                self.pixmap = self.pixmap.transformed(QTransform().rotate(90))
-            size = self.pixmap.size()
+            if self.pix.width() > self.pix.height():
+                self.pix = self.pix.transformed(QTransform().rotate(90))
+            size = self.pix.size()
             size.scale(rect.size(), Qt.KeepAspectRatio)
             painter.setViewport(rect.x(), rect.y(), size.width(), size.height())
-            painter.setWindow(self.pixmap.rect())
-            painter.drawPixmap(0, 0, self.pixmap)
+            painter.setWindow(self.pix.rect())
+            painter.drawPixmap(0, 0, self.pix)
 
     def resizeEvent(self, event=None):
         if self.fit_win_act.isChecked():

@@ -23,7 +23,8 @@ The screensaver is disabled while the slideshow is running.
 
 You can save images, and the image (exif) data will be saved. However,
 the orientation data will be rewritten, so that the next time you open
-the image it will appear the same way.
+the image, it will appear the same way. You now also have the option
+to remove the exif data if that is what you want.
 
 The preferences (automatic orientation, slideshow time delay and jpeg
 image quality) are saved for the next time you use Cheesemaker.
@@ -58,8 +59,6 @@ TODO
 -  Make it faster.
 -  Put my feet up and relax.
 -  Maybe add more basic editing functionality.
--  Maybe improve auto-orientation.
--  Take it easy for a while.
 
 Author
 ~~~~~~
